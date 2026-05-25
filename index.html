@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>ECOUNIT — Калькулятор товаров</title>
+    <link rel="icon" href="UNIT.png" type="image/png">
+    <link rel="shortcut icon" href="UNIT.ico" type="image/x-icon">
+    <style>
+        @font-face {
+            font-family: 'Aerobus';
+            src: url('fonts/Aerobus-Regular.ttf') format('truetype');
+            font-weight: normal; font-style: normal; font-display: swap;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: white; font-family: 'Inter', system-ui, 'Segoe UI', -apple-system, sans-serif;
+            height: 100vh; display: flex; flex-direction: column;
+        }
+        .header { background-color: #34A853; padding: 0.8rem 2rem; }
+        .header h1 {
+            font-family: 'Aerobus', sans-serif;
+            font-size: 2.5rem; font-weight: normal; color: white; margin: 0; letter-spacing: 1px;
+        }
+        .table-container { flex: 1; overflow: auto; padding: 1rem; }
+        .data-table {
+            border-collapse: collapse; table-layout: fixed;
+            width: max-content; min-width: 100%; font-size: 0.8rem;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid rgba(221, 221, 221, 0.25);
+            padding: 0 4px;
+            vertical-align: middle;
+            height: 72px;                /* достаточно для фото 64px */
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-sizing: border-box;
+        }
+        .data-table th {
+            background-color: #f1f3f4; font-weight: 600;
+            position: sticky; top: 0; z-index: 10; border-bottom: 3px solid #ccc;
+        }
+        /* Название, ссылки, удаление – по левому краю (удаление по центру) */
+        .data-table th:nth-child(2), .data-table td:nth-child(2),
+        .data-table th.link-col, .data-table td.link-col {
+            text-align: left !important;
+        }
+        /* Фото */
+        .data-table th:first-child, .data-table td:first-child {
+            width: 72px !important; min-width: 72px !important; max-width: 72px !important;
+            text-align: center;
+            padding: 0;
+        }
+        .data-table td:first-child img {
+            width: 64px; height: 64px;
+            object-fit: cover;
+            display: block; margin: 0 auto;
+            border-radius: 16px;
+        }
+        /* Название (жирный) */
+        .data-table th:nth-child(2), .data-table td:nth-child(2) {
+            width: 150px !important; min-width: 150px !important; max-width: 150px !important;
+            text-align: left;
+            font-weight: 600;
+        }
+        .data-table td:nth-child(2) .editable-cell {
+            font-weight: 600;
+        }
+        .data-table th.link-col, .data-table td.link-col {
+            min-width: 60px !important;
+            max-width: 80px !important;
+        }
+        .group-ozon { background-color: #005bff !important; color: white; }
+        .group-1688 { background-color: #ff5b00 !important; color: white; }
+        .group-wb { background-color: #e93acd !important; color: white; }
+        .param-row th { background-color: #f8f9fa; font-weight: normal; color: #333; }
+
+        .data-table td {
+            vertical-align: middle;
+            line-height: 1.2;
+        }
+        .data-table td .editable-cell,
+        .data-table td .link-cell {
+            display: flex;
+            align-items: center;
+            height: 72px;    /* под новую высоту строки */
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            justify-content: inherit;
+        }
+        .data-table td .editable-cell {
+            cursor: pointer;
+            text-align: inherit;
+        }
+        .editable-cell input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: inherit;
+            margin: 0;
+            padding: 0;
+            outline: none;
+            box-sizing: border-box;
+            text-align: inherit;
+            line-height: 1.2;
+        }
+        .link-cell { cursor: pointer; }
+        .link-cell a {
+            display: inline-block;
+            text-decoration: none;
+            color: #005bff;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100%;
+            line-height: 1.2;
+        }
+        .link-cell a:hover { text-decoration: underline; }
+        .link-cell input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: inherit;
+            padding: 0;
+            margin: 0;
+            outline: none;
+            box-sizing: border-box;
+            line-height: 1.2;
+        }
+        .param-input { width: 35px; padding: 2px; border: 1px solid #ccc; border-radius: 3px; font-size: 0.7rem; text-align: center; display: inline-block; vertical-align: middle; }
+        .data-table input[type="number"]::-webkit-inner-spin-button,
+        .data-table input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .data-table input[type="number"] { -moz-appearance: textfield; }
+        .footer {
+            background-color: #f1f3f4;
+            text-align: center;
+            padding: 10px 2rem;
+            font-size: 0.75rem;
+            color: #555;
+            border-top: 1px solid #ddd;
+        }
+
+        /* Красная строка при маржинальности ≤ 0 */
+        .row-red td {
+            background-color: #ffcccc !important;
+        }
+
+        /* Кнопка удаления */
+        .delete-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: #c0392b;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+        .delete-btn:hover {
+            opacity: 1;
+        }
+
+        /* Центрирование чисел */
+        .data-table td:not(.link-col):not(:first-child):not(:nth-child(2)):not(:last-child) .editable-cell {
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+<div class="header"><h1>ECOUNIT</h1></div>
+<div class="table-container">
+    <table class="data-table" id="mainTable">
+        <thead id="tableHeader"></thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+</div>
+<div class="footer">© 2026 Все права защищены. Сайт by ANK</div>
+
+<script>
+    // ========== Глобальные параметры ==========
+    let globalParams = {
+        ekvairingPercent: 0, crossDockingPercent: 0, logisticPercent: 5,
+        lastMilePercent: 0, returnsPercent: 0, usdRate: 90, usdRateMarkup: 8,
+        cnyRate: 12.5, cnyRateMarkup: 8, logisticTariff: 1.5,
+        commission1688Percent: 0, brakPercent: 0, reklamaPercent: 0,
+        upakovkaRub: 0, procheePercent: 0, nalogPercent: 0
+    };
+    let rowsData = [];
+    const ROWS = 500;
+    const STORAGE_KEY = 'ecounit_data';
+
+    // ========== Пустая строка ==========
+    function createEmptyRow() {
+        return {
+            id: -1, // будет заменён при инициализации
+            photo: '',
+            name: '',
+            category: '',
+            link: '',
+            price: 0,
+            commissionManual: null,
+            commissionLeftValue: 0,
+            commissionRub: 0,
+            ekvRub: 0, crossRub: 0, logisticsRub: 0, lastMileRub: 0, returnsRub: 0,
+            ozonExpenses: 0,
+            link1688: '', purchaseCNY: 0, purchaseRub: 0, weight: 0,
+            logisticUSD: 0, logisticRub1688: 0, comm1688Rub: 0, brakRub: 0, costPrice: 0,
+            reklamaPercentLocal: null, reklamaRub: 0, upakovkaRubLocal: null, procheeRub: 0,
+            totalExpensesWB: 0, directExpenses: 0, profit: 0, nalogRub: 0, netProfit: 0,
+            margin: 0, rent: 0
+        };
+    }
+
+    // ========== Сохранение и загрузка ==========
+    function saveToStorage() {
+        const data = {
+            globalParams: globalParams,
+            rows: rowsData.map(row => ({
+                name: row.name,
+                link: row.link,
+                price: row.price,
+                commissionManual: row.commissionManual,
+                purchaseCNY: row.purchaseCNY,
+                weight: row.weight,
+                link1688: row.link1688,
+                reklamaPercentLocal: row.reklamaPercentLocal,
+                upakovkaRubLocal: row.upakovkaRubLocal,
+                photo: row.photo,
+                category: row.category
+            }))
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function loadFromStorage() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) return false;
+        try {
+            const data = JSON.parse(saved);
+            if (data.globalParams) globalParams = { ...globalParams, ...data.globalParams };
+            if (data.rows && Array.isArray(data.rows)) {
+                initRows();
+                data.rows.forEach((savedRow, idx) => {
+                    if (idx < rowsData.length) Object.assign(rowsData[idx], savedRow);
+                });
+            }
+            return true;
+        } catch (e) { console.warn('Ошибка загрузки', e); return false; }
+    }
+
+    function initRows() {
+        rowsData = [];
+        for (let i = 0; i < ROWS; i++) {
+            const row = createEmptyRow();
+            row.id = i;
+            rowsData.push(row);
+        }
+    }
+
+    async function fetchExchangeRates() {
+        try {
+            const res = await fetch('https://www.cbr-xml-daily.ru/daily_json.js');
+            const data = await res.json();
+            globalParams.usdRate = data.Valute.USD.Value;
+            globalParams.cnyRate = data.Valute.CNY.Value;
+            saveToStorage();
+        } catch (e) {}
+    }
+
+    function formatCurrency(v) { return (v === 0 || isNaN(v) || v === null) ? '' : Math.round(v) + ' ₽'; }
+    function formatPercent(v) { return (v === 0 || isNaN(v) || v === null) ? '' : v + ' %'; }
+    function formatDollar(v) { return (v === 0 || isNaN(v) || v === null) ? '' : v.toFixed(2) + ' $'; }
+
+    function recalcRow(idx) {
+        const r = rowsData[idx];
+        const price = parseFloat(r.price) || 0;
+        if (!price) {
+            r.commissionRub = r.ekvRub = r.crossRub = r.logisticsRub = r.lastMileRub = r.returnsRub = r.ozonExpenses = 0;
+            r.purchaseRub = r.logisticUSD = r.logisticRub1688 = r.comm1688Rub = r.brakRub = r.costPrice = 0;
+            r.reklamaRub = r.procheeRub = r.totalExpensesWB = r.directExpenses = r.profit = r.nalogRub = r.netProfit = r.margin = r.rent = 0;
+            return;
+        }
+        let comm;
+        if (price <= 100) comm = 14;
+        else if (price <= 300) comm = 20;
+        else comm = (r.commissionManual != null && !isNaN(r.commissionManual)) ? parseFloat(r.commissionManual) : 0;
+        r.commissionLeftValue = comm;
+        r.commissionRub = price * comm / 100;
+
+        r.ekvRub = price * globalParams.ekvairingPercent / 100;
+        r.crossRub = price * globalParams.crossDockingPercent / 100;
+        let logP = globalParams.logisticPercent;
+        r.logisticsRub = (price <= 300) ? 21 + price * logP / 100 : 81 + price * logP / 100;
+        r.lastMileRub = price * globalParams.lastMilePercent / 100;
+        r.returnsRub = price * globalParams.returnsPercent / 100;
+        r.ozonExpenses = r.commissionRub + r.ekvRub + r.crossRub + r.logisticsRub + r.lastMileRub + r.returnsRub;
+
+        let purchaseCNY = parseFloat(r.purchaseCNY) || 0;
+        r.purchaseRub = purchaseCNY * (globalParams.cnyRate * (1 + globalParams.cnyRateMarkup / 100));
+
+        let weightKg = (parseFloat(r.weight) || 0) / 1000;
+        r.logisticUSD = weightKg * globalParams.logisticTariff;
+        r.logisticRub1688 = r.logisticUSD * (globalParams.usdRate * (1 + globalParams.usdRateMarkup / 100));
+
+        r.comm1688Rub = r.purchaseRub * globalParams.commission1688Percent / 100;
+        r.brakRub = r.purchaseRub * globalParams.brakPercent / 100;
+        r.costPrice = r.purchaseRub + r.logisticRub1688 + r.comm1688Rub + r.brakRub;
+
+        let reklamaPercent = (r.reklamaPercentLocal != null && !isNaN(r.reklamaPercentLocal)) ? parseFloat(r.reklamaPercentLocal) : globalParams.reklamaPercent;
+        r.reklamaRub = price * reklamaPercent / 100;
+
+        let upakovkaRub = (r.upakovkaRubLocal != null && !isNaN(r.upakovkaRubLocal)) ? parseFloat(r.upakovkaRubLocal) : globalParams.upakovkaRub;
+        r.procheeRub = price * globalParams.procheePercent / 100;
+        r.totalExpensesWB = r.ozonExpenses + r.costPrice + r.reklamaRub + upakovkaRub + r.procheeRub;
+        r.directExpenses = r.costPrice + upakovkaRub + r.procheeRub;
+        r.profit = price - r.totalExpensesWB;
+        r.nalogRub = price * globalParams.nalogPercent / 100;
+        r.netProfit = r.profit - r.nalogRub;
+        r.margin = (price !== 0) ? (r.netProfit / price) * 100 : 0;
+        if (r.directExpenses !== 0) r.rent = (r.netProfit / r.directExpenses) * 100;
+        else r.rent = 0;
+    }
+
+    function recalcAllRows() {
+        for (let i = 0; i < ROWS; i++) recalcRow(i);
+        for (let i = 0; i < ROWS; i++) if (rowsDOM[i]) updateRowDisplay(i);
+    }
+
+    // ========== Добавление из расширения ==========
+    window.addItemFromExtension = function(item) {
+        const cleanPrice = String(item.price || '').replace(/\s/g, '').replace(',', '.');
+        const numericPrice = parseFloat(cleanPrice) || 0;
+        const emptyRow = rowsData.find(r => !r.link);
+        if (!emptyRow) return;
+        emptyRow.photo = item.photoUrl || '';
+        emptyRow.name = item.name || '';
+        emptyRow.link = item.url || '';
+        emptyRow.price = numericPrice;
+        emptyRow.category = item.category || '';
+        emptyRow.purchaseCNY = 0;
+        emptyRow.weight = 10;
+        recalcRow(emptyRow.id);
+        const idx = rowsData.findIndex(r => r.id === emptyRow.id);
+        if (rowsDOM[idx]) updateRowDisplay(idx);
+        saveToStorage();
+    };
+
+    window.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'ECOUNIT_ADD_ITEM') {
+            if (typeof window.addItemFromExtension === 'function') {
+                window.addItemFromExtension(event.data.item);
+            }
+        }
+    });
+
+    // ========== Удаление строки ==========
+    function deleteRow(idx) {
+        // Сдвигаем все данные вверх
+        for (let i = idx; i < ROWS - 1; i++) {
+            Object.assign(rowsData[i], rowsData[i + 1]);
+            // id не меняем, он остаётся равным i
+        }
+        // Очищаем последнюю строку
+        Object.assign(rowsData[ROWS - 1], createEmptyRow());
+        rowsData[ROWS - 1].id = ROWS - 1;
+        // Пересчитываем и обновляем отображение для всех изменённых строк
+        for (let i = idx; i < ROWS; i++) {
+            recalcRow(i);
+            if (rowsDOM[i]) updateRowDisplay(i);
+        }
+        saveToStorage();
+    }
+
+    const columns = [
+        { group: "ozon", mainTitle: "Фото", paramType: null },
+        { group: "ozon", mainTitle: "Название", paramType: null },
+        { group: "ozon", mainTitle: "Ссылка", paramType: null },
+        { group: "ozon", mainTitle: "Цена", paramType: null },
+        { group: "ozon", mainTitle: "Комиссия", paramType: null },
+        { group: "ozon", mainTitle: "Комиссия", paramType: null },
+        { group: "ozon", mainTitle: "Эквайринг", paramType: "percent", paramId: "ekvairingPercent" },
+        { group: "ozon", mainTitle: "Эквайринг", paramType: null },
+        { group: "ozon", mainTitle: "Кросс-докинг", paramType: "percent", paramId: "crossDockingPercent" },
+        { group: "ozon", mainTitle: "Кросс-докинг", paramType: null },
+        { group: "ozon", mainTitle: "Логистика", paramType: "percent", paramId: "logisticPercent" },
+        { group: "ozon", mainTitle: "Последняя миля", paramType: "percent", paramId: "lastMilePercent" },
+        { group: "ozon", mainTitle: "Последняя миля", paramType: null },
+        { group: "ozon", mainTitle: "Возвраты и отмены", paramType: "percent", paramId: "returnsPercent" },
+        { group: "ozon", mainTitle: "Возвраты и отмены", paramType: null },
+        { group: "ozon", mainTitle: "Расходы на Ozon", paramType: null },
+        { group: "1688", mainTitle: "Ссылка", paramType: null },
+        { group: "1688", mainTitle: "Закупочная цена", paramType: null },
+        { group: "1688", mainTitle: "Закупочная цена", paramType: "cny" },
+        { group: "1688", mainTitle: "Вес", paramType: null },
+        { group: "1688", mainTitle: "Логистика", paramType: "tariff", paramId: "logisticTariff" },
+        { group: "1688", mainTitle: "Логистика", paramType: "usd" },
+        { group: "1688", mainTitle: "Комиссия", paramType: "percent", paramId: "commission1688Percent" },
+        { group: "1688", mainTitle: "Комиссия", paramType: null },
+        { group: "1688", mainTitle: "Брак", paramType: "percent", paramId: "brakPercent" },
+        { group: "1688", mainTitle: "Брак", paramType: null },
+        { group: "1688", mainTitle: "Себестоимость", paramType: null },
+        { group: "wb", mainTitle: "Реклама", paramType: "percent", paramId: "reklamaPercent" },
+        { group: "wb", mainTitle: "Реклама", paramType: null },
+        { group: "wb", mainTitle: "Упаковка", paramType: "rub", paramId: "upakovkaRub" },
+        { group: "wb", mainTitle: "Прочее", paramType: "percent", paramId: "procheePercent" },
+        { group: "wb", mainTitle: "Прочее", paramType: null },
+        { group: "wb", mainTitle: "Итого расходы", paramType: null },
+        { group: "wb", mainTitle: "Прямые расходы", paramType: null },
+        { group: "wb", mainTitle: "Прибыль", paramType: null },
+        { group: "wb", mainTitle: "Налог", paramType: "percent", paramId: "nalogPercent" },
+        { group: "wb", mainTitle: "Чистая прибыль", paramType: null },
+        { group: "wb", mainTitle: "Маржинальность", paramType: null },
+        { group: "wb", mainTitle: "Рентабельность", paramType: null },
+        { group: "wb", mainTitle: "", paramType: null }  // колонка удаления
+    ];
+
+    function buildHeader() {
+        const thead = document.getElementById('tableHeader');
+        thead.innerHTML = '';
+
+        const rowParams = document.createElement('tr');
+        rowParams.classList.add('param-row');
+        let i = 0;
+        while (i < columns.length) {
+            const col = columns[i];
+            let span = 1;
+            while (i + span < columns.length && columns[i + span].mainTitle === col.mainTitle) span++;
+            const th = document.createElement('th');
+            th.style.backgroundColor = '#f8f9fa';
+            if (span > 1) th.colSpan = span;
+            const paramCol = columns.slice(i, i + span).find(c => c.paramType && c.paramId);
+            if (paramCol) {
+                const wrapper = document.createElement('div');
+                const input = document.createElement('input');
+                input.type = 'number'; input.step = '0.1';
+                input.value = globalParams[paramCol.paramId] === 0 ? '' : globalParams[paramCol.paramId];
+                input.classList.add('param-input');
+                input.addEventListener('change', e => {
+                    let val = parseFloat(e.target.value);
+                    if (isNaN(val)) val = 0;
+                    globalParams[paramCol.paramId] = val;
+                    recalcAllRows();
+                    saveToStorage();
+                    if (globalParams[paramCol.paramId] === 0) e.target.value = '';
+                });
+                wrapper.appendChild(input);
+                if (paramCol.paramType === 'percent') wrapper.appendChild(document.createTextNode(' %'));
+                else if (paramCol.paramType === 'rub') wrapper.appendChild(document.createTextNode(' ₽'));
+                else if (paramCol.paramType === 'tariff') wrapper.appendChild(document.createTextNode(' $/кг'));
+                th.appendChild(wrapper);
+            } else {
+                th.textContent = '';
+            }
+            rowParams.appendChild(th);
+            i += span;
+        }
+        thead.appendChild(rowParams);
+
+        const rowNames = document.createElement('tr');
+        const titleCells = [];
+        i = 0;
+        while (i < columns.length) {
+            const currentMain = columns[i].mainTitle;
+            let span = 1, j = i + 1;
+            while (j < columns.length && columns[j].mainTitle === currentMain) { span++; j++; }
+            const th = document.createElement('th');
+            th.textContent = currentMain;
+            if (span > 1) th.colSpan = span;
+            if (columns[i].group === 'ozon') th.classList.add('group-ozon');
+            else if (columns[i].group === '1688') th.classList.add('group-1688');
+            else if (columns[i].group === 'wb') th.classList.add('group-wb');
+            if (i === 2 || i === 16) th.classList.add('link-col');
+            titleCells.push({th, start: i, end: i + span - 1, span});
+            rowNames.appendChild(th);
+            i = j;
+        }
+        thead.appendChild(rowNames);
+
+        const table = document.getElementById('mainTable');
+        const colgroup = document.createElement('colgroup');
+        const colWidths = new Array(columns.length).fill(75);
+        colWidths[0] = 72;   // фото
+        colWidths[1] = 150;  // название
+        colWidths[columns.length - 1] = 46; // кнопка удаления
+        const linkIndices = [2, 16];
+
+        const measureEl = document.createElement('span');
+        measureEl.style.font = '600 0.8rem "Inter", system-ui, sans-serif';
+        measureEl.style.whiteSpace = 'nowrap';
+        measureEl.style.position = 'absolute';
+        measureEl.style.visibility = 'hidden';
+        measureEl.style.display = 'inline-block';
+        document.body.appendChild(measureEl);
+
+        titleCells.forEach(({th, start, end, span}) => {
+            if (start === 0 || start === 1 || linkIndices.includes(start) || start === columns.length - 1) return;
+            measureEl.textContent = th.textContent;
+            const textWidth = measureEl.offsetWidth + 20;
+            const totalWidth = Math.max(textWidth, 100);
+            const perCol = Math.ceil(totalWidth / span);
+            for (let k = start; k <= end; k++) colWidths[k] = perCol;
+        });
+
+        colWidths.forEach((w, idx) => {
+            const col = document.createElement('col');
+            if (linkIndices.includes(idx)) col.style.width = 'auto';
+            else col.style.width = w + 'px';
+            colgroup.appendChild(col);
+        });
+        document.body.removeChild(measureEl);
+        table.insertBefore(colgroup, table.firstChild);
+    }
+
+    let rowsDOM = [];
+
+    function buildBody() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        rowsDOM = [];
+        for (let i = 0; i < ROWS; i++) {
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-row-id', i);
+            for (let j = 0; j < columns.length; j++) {
+                const td = document.createElement('td');
+                if (j === 2 || j === 16) td.classList.add('link-col');
+                tr.appendChild(td);
+            }
+            tbody.appendChild(tr);
+            rowsDOM.push(tr);
+        }
+        for (let i = 0; i < ROWS; i++) updateRowDisplay(i);
+    }
+
+    function getMarginColor(v) { return v <= 8 ? '#f4cccc' : v <= 15 ? '#fff2cc' : v <= 22 ? '#b7e1cd' : '#8ed6b3'; }
+    function getRentColor(v) { return v <= 30 ? '#f4cccc' : v <= 70 ? '#fff2cc' : v <= 100 ? '#b7e1cd' : '#8ed6b3'; }
+
+    function updateRowDisplay(idx) {
+        const tr = rowsDOM[idx]; if (!tr) return;
+        const r = rowsData[idx], cells = tr.cells;
+
+        // 0. Фото
+        cells[0].innerHTML = '';
+        if (r.photo) {
+            const img = document.createElement('img');
+            img.src = r.photo;
+            img.alt = 'Фото';
+            img.title = r.name || 'Товар';
+            cells[0].appendChild(img);
+        }
+
+        // 1. Название
+        cells[1].innerHTML = '';
+        const nameDiv = createEditableText(r.name, (val) => {
+            if (val.length) val = val.charAt(0).toUpperCase() + val.slice(1);
+            r.name = val;
+            recalcRow(idx);
+            updateRowDisplay(idx);
+            saveToStorage();
+        });
+        if (r.name) nameDiv.title = r.name;
+        cells[1].appendChild(nameDiv);
+
+        // 2. Ссылка Ozon
+        cells[2].innerHTML = '';
+        cells[2].appendChild(createLinkEditor(r.link, (newLink) => {
+            r.link = newLink;
+            saveToStorage();
+            recalcRow(idx);
+            updateRowDisplay(idx);
+        }));
+
+        // 3. Цена
+        cells[3].innerHTML = '';
+        cells[3].appendChild(createEditableNumberWithSymbol(r.price, v => {
+            let n = parseFloat(v); if (isNaN(n)) n = 0;
+            r.price = n; recalcRow(idx); updateRowDisplay(idx); saveToStorage();
+        }, '₽'));
+
+        // 4. Комиссия %
+        cells[4].innerHTML = '';
+        if (r.price > 300) {
+            cells[4].appendChild(createEditableNumberWithSymbol(
+                r.commissionManual != null && r.commissionManual !== 0 ? r.commissionManual : '', v => {
+                let n = parseFloat(v);
+                r.commissionManual = isNaN(n) ? null : n;
+                recalcRow(idx); updateRowDisplay(idx); saveToStorage();
+            }, '%'));
+        } else {
+            cells[4].textContent = (r.price !== 0 && r.commissionLeftValue !== 0) ? formatPercent(r.commissionLeftValue) : '';
+        }
+
+        cells[5].textContent = formatCurrency(r.commissionRub);
+        cells[6].textContent = (r.price !== 0 && globalParams.ekvairingPercent !== 0) ? formatPercent(globalParams.ekvairingPercent) : '';
+        cells[7].textContent = formatCurrency(r.ekvRub);
+        cells[8].textContent = (r.price !== 0 && globalParams.crossDockingPercent !== 0) ? formatPercent(globalParams.crossDockingPercent) : '';
+        cells[9].textContent = formatCurrency(r.crossRub);
+        cells[10].textContent = formatCurrency(r.logisticsRub);
+        cells[11].textContent = (r.price !== 0 && globalParams.lastMilePercent !== 0) ? formatPercent(globalParams.lastMilePercent) : '';
+        cells[12].textContent = formatCurrency(r.lastMileRub);
+        cells[13].textContent = (r.price !== 0 && globalParams.returnsPercent !== 0) ? formatPercent(globalParams.returnsPercent) : '';
+        cells[14].textContent = formatCurrency(r.returnsRub);
+        cells[15].textContent = formatCurrency(r.ozonExpenses);
+        cells[16].innerHTML = ''; cells[16].appendChild(createLinkEditor(r.link1688, v => { r.link1688 = v; saveToStorage(); updateRowDisplay(idx); }));
+        cells[17].innerHTML = '';
+        cells[17].appendChild(createEditableNumberWithSymbol(r.purchaseCNY, v => {
+            let n = parseFloat(v); if (isNaN(n)) n = 0;
+            r.purchaseCNY = n; recalcRow(idx); updateRowDisplay(idx); saveToStorage();
+        }, '¥', true));
+        cells[18].textContent = formatCurrency(r.purchaseRub);
+        cells[19].innerHTML = '';
+        cells[19].appendChild(createEditableNumber(r.weight, v => {
+            let n = parseFloat(v); if (isNaN(n)) n = 0;
+            r.weight = n; recalcRow(idx); updateRowDisplay(idx); saveToStorage();
+        }, true));
+        cells[20].textContent = formatDollar(r.logisticUSD);
+        cells[21].textContent = formatCurrency(r.logisticRub1688);
+        cells[22].textContent = (r.price !== 0 && globalParams.commission1688Percent !== 0) ? formatPercent(globalParams.commission1688Percent) : '';
+        cells[23].textContent = formatCurrency(r.comm1688Rub);
+        cells[24].textContent = (r.price !== 0 && globalParams.brakPercent !== 0) ? formatPercent(globalParams.brakPercent) : '';
+        cells[25].textContent = formatCurrency(r.brakRub);
+        cells[26].textContent = formatCurrency(r.costPrice);
+        cells[27].innerHTML = '';
+        const localReklama = r.reklamaPercentLocal;
+        const dispReklama = localReklama !== null ? localReklama : (r.price !== 0 ? globalParams.reklamaPercent : 0);
+        cells[27].appendChild(createLocalEditablePercent(dispReklama, v => {
+            if (v === null || v === '' || isNaN(parseFloat(v))) r.reklamaPercentLocal = null;
+            else r.reklamaPercentLocal = parseFloat(v);
+            recalcRow(idx); updateRowDisplay(idx); saveToStorage();
+        }));
+        cells[28].textContent = formatCurrency(r.reklamaRub);
+        cells[29].innerHTML = '';
+        const localUpakovka = r.upakovkaRubLocal;
+        const dispUpakovka = localUpakovka !== null ? localUpakovka : (r.price !== 0 ? globalParams.upakovkaRub : 0);
+        cells[29].appendChild(createLocalEditableRub(dispUpakovka, v => {
+            if (v === null || v === '' || isNaN(parseFloat(v))) r.upakovkaRubLocal = null;
+            else r.upakovkaRubLocal = parseFloat(v);
+            recalcRow(idx); updateRowDisplay(idx); saveToStorage();
+        }));
+        cells[30].textContent = (r.price !== 0 && globalParams.procheePercent !== 0) ? formatPercent(globalParams.procheePercent) : '';
+        cells[31].textContent = formatCurrency(r.procheeRub);
+        cells[32].textContent = formatCurrency(r.totalExpensesWB);
+        cells[33].textContent = formatCurrency(r.directExpenses);
+        cells[34].textContent = formatCurrency(r.profit);
+        cells[35].textContent = (r.price !== 0 && globalParams.nalogPercent !== 0) ? formatPercent(globalParams.nalogPercent) : '';
+        cells[36].textContent = formatCurrency(r.netProfit);
+        const marginVal = r.margin;
+        cells[37].textContent = (marginVal !== 0) ? marginVal.toFixed(2) + ' %' : '';
+        cells[37].style.backgroundColor = (marginVal !== 0) ? getMarginColor(marginVal) : '';
+        const rentVal = r.rent;
+        cells[38].textContent = (rentVal !== 0) ? rentVal.toFixed(2) + ' %' : '';
+        cells[38].style.backgroundColor = (rentVal !== 0) ? getRentColor(rentVal) : '';
+
+        // Кнопка удаления
+        const delCell = cells[columns.length - 1];
+        delCell.innerHTML = '';
+        const delBtn = document.createElement('button');
+        delBtn.className = 'delete-btn';
+        delBtn.innerHTML = '&#10005;'; // крестик
+        delBtn.title = 'Удалить товар';
+        delBtn.addEventListener('click', () => deleteRow(idx));
+        delCell.appendChild(delBtn);
+
+        // Подсветка красным
+        if (r.price > 0 && marginVal <= 0) {
+            tr.classList.add('row-red');
+        } else {
+            tr.classList.remove('row-red');
+        }
+    }
+
+    // ========== Вспомогательные функции ==========
+    function createEditableNumber(value, onSave, showZero = false) {
+        const div = document.createElement('div'); div.className = 'editable-cell';
+        const displayVal = (value === 0 && showZero) ? '0' : ((value === 0 || value === null || value === '') ? '' : value);
+        div.textContent = displayVal;
+        div.addEventListener('click', e => {
+            e.stopPropagation(); if (div.querySelector('input')) return;
+            const input = document.createElement('input'); input.type = 'number'; input.step = 'any';
+            input.value = (value === 0 || value === null) ? '' : value;
+            div.innerHTML = ''; div.appendChild(input); input.focus();
+            const save = () => { onSave(input.value); };
+            input.addEventListener('blur', save);
+            input.addEventListener('keydown', ev => {
+                if (ev.key === 'Enter') save();
+                else if (ev.key === 'Tab') { ev.preventDefault(); save(); moveToNextEditableCell(div, 1); }
+            });
+            document.addEventListener('click', function h(ev) { if (!div.contains(ev.target)) { save(); document.removeEventListener('click', h); } });
+        });
+        return div;
+    }
+
+    function createEditableNumberWithSymbol(value, onSave, symbol, showZero = false) {
+        const div = document.createElement('div'); div.className = 'editable-cell';
+        const displayVal = (value === 0 && showZero) ? '0 ' + symbol :
+                           ((value === 0 || value === null || value === '') ? '' : value + (symbol ? ' ' + symbol : ''));
+        div.textContent = displayVal;
+        div.addEventListener('click', e => {
+            e.stopPropagation(); if (div.querySelector('input')) return;
+            const input = document.createElement('input'); input.type = 'number'; input.step = 'any';
+            input.value = (value === 0 || value === null) ? '' : value;
+            div.innerHTML = ''; div.appendChild(input); input.focus();
+            const save = () => { onSave(input.value); };
+            input.addEventListener('blur', save);
+            input.addEventListener('keydown', ev => {
+                if (ev.key === 'Enter') save();
+                else if (ev.key === 'Tab') { ev.preventDefault(); save(); moveToNextEditableCell(div, 1); }
+            });
+            document.addEventListener('click', function h(ev) { if (!div.contains(ev.target)) { save(); document.removeEventListener('click', h); } });
+        });
+        return div;
+    }
+
+    function createEditableText(value, onSave) {
+        const div = document.createElement('div'); div.className = 'editable-cell';
+        div.textContent = value || '';
+        div.addEventListener('click', e => {
+            e.stopPropagation(); if (div.querySelector('input')) return;
+            const input = document.createElement('input'); input.type = 'text'; input.value = value;
+            div.innerHTML = ''; div.appendChild(input); input.focus();
+            const save = () => { onSave(input.value); };
+            input.addEventListener('blur', save);
+            input.addEventListener('keydown', ev => {
+                if (ev.key === 'Enter') save();
+                else if (ev.key === 'Tab') { ev.preventDefault(); save(); moveToNextEditableCell(div, 1); }
+            });
+            document.addEventListener('click', function h(ev) { if (!div.contains(ev.target)) { save(); document.removeEventListener('click', h); } });
+        });
+        return div;
+    }
+
+    function createLinkEditor(url, onSave) {
+        const div = document.createElement('div'); div.className = 'link-cell';
+        const a = document.createElement('a'); a.textContent = url || ''; a.href = url; a.target = '_blank';
+        a.style.display = 'inline-block'; a.style.maxWidth = '100%'; a.style.overflow = 'hidden'; a.style.textOverflow = 'ellipsis';
+        div.appendChild(a);
+        div.addEventListener('click', e => {
+            if (e.target === a) return;
+            e.stopPropagation(); if (div.querySelector('input')) return;
+            const input = document.createElement('input'); input.type = 'text'; input.value = url;
+            div.innerHTML = ''; div.appendChild(input); input.focus();
+            const save = () => { onSave(input.value); };
+            input.addEventListener('blur', save);
+            input.addEventListener('keydown', ev => {
+                if (ev.key === 'Enter') save();
+                else if (ev.key === 'Tab') { ev.preventDefault(); save(); moveToNextEditableCell(div, 1); }
+            });
+            document.addEventListener('click', function h(ev) { if (!div.contains(ev.target)) { save(); document.removeEventListener('click', h); } });
+        });
+        return div;
+    }
+
+    function createLocalEditablePercent(value, onSave) {
+        const div = document.createElement('div'); div.className = 'editable-cell';
+        div.textContent = (value === 0 || value === null || value === '') ? '' : value + ' %';
+        div.addEventListener('click', e => {
+            e.stopPropagation(); if (div.querySelector('input')) return;
+            const input = document.createElement('input'); input.type = 'number'; input.step = 'any';
+            input.value = (value === 0 || value === null) ? '' : value;
+            div.innerHTML = ''; div.appendChild(input); input.focus();
+            const save = () => { onSave(input.value); };
+            input.addEventListener('blur', save);
+            input.addEventListener('keydown', ev => {
+                if (ev.key === 'Enter') save();
+                else if (ev.key === 'Tab') { ev.preventDefault(); save(); moveToNextEditableCell(div, 1); }
+            });
+            document.addEventListener('click', function h(ev) { if (!div.contains(ev.target)) { save(); document.removeEventListener('click', h); } });
+        });
+        return div;
+    }
+
+    function createLocalEditableRub(value, onSave) {
+        const div = document.createElement('div'); div.className = 'editable-cell';
+        div.textContent = (value === 0 || value === null || value === '') ? '' : value + ' ₽';
+        div.addEventListener('click', e => {
+            e.stopPropagation(); if (div.querySelector('input')) return;
+            const input = document.createElement('input'); input.type = 'number'; input.step = 'any';
+            input.value = (value === 0 || value === null) ? '' : value;
+            div.innerHTML = ''; div.appendChild(input); input.focus();
+            const save = () => { onSave(input.value); };
+            input.addEventListener('blur', save);
+            input.addEventListener('keydown', ev => {
+                if (ev.key === 'Enter') save();
+                else if (ev.key === 'Tab') { ev.preventDefault(); save(); moveToNextEditableCell(div, 1); }
+            });
+            document.addEventListener('click', function h(ev) { if (!div.contains(ev.target)) { save(); document.removeEventListener('click', h); } });
+        });
+        return div;
+    }
+
+    function moveToNextEditableCell(currentDiv, direction) {
+        const td = currentDiv.closest('td'); if (!td) return;
+        const tr = td.parentNode; if (!tr) return;
+        const cells = Array.from(tr.cells); let idx = cells.indexOf(td); if (idx === -1) return;
+        for (let step = 1; step <= cells.length; step++) {
+            let nextIdx = idx + direction * step;
+            if (nextIdx < 0 || nextIdx >= cells.length) break;
+            const nextTd = cells[nextIdx];
+            const editableDiv = nextTd.querySelector('.editable-cell, .link-cell');
+            if (editableDiv) { editableDiv.click(); const input = editableDiv.querySelector('input'); if (input) input.focus(); break; }
+        }
+    }
+
+    async function init() {
+        const loaded = loadFromStorage();
+        if (!loaded) initRows();
+        await fetchExchangeRates();
+        buildHeader();
+        recalcAllRows();
+        buildBody();
+    }
+
+    init();
+</script>
+</body>
+</html>
