@@ -185,11 +185,15 @@
         .data-table td:not(.link-col):not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:last-child) .editable-cell {
             justify-content: center;
         }
-/* Шапка-1 в закреплённых столбцах — светло-серая, но под шапкой-2 */
-.param-row th.sticky-left,
+/* Левая группа */
+.param-row th.sticky-left {
+    background-color: #f8f9fa !important;
+    z-index: 1 !important;
+}
+/* Правая группа */
 .param-row th.sticky-col {
-    background-color: #f8f9fa !important;   /* такой же цвет, как у остальной шапки-1 */
-    z-index: 1 !important;                  /* остаётся ниже всех */
+    background-color: #f8f9fa !important;
+    z-index: 1 !important;
 }
     </style>
 </head>
