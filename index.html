@@ -131,18 +131,15 @@
 
         .sticky-col {
             position: sticky;
-            background-color: inherit;
+            background-color: inherit;   /* фон наследуется */
             z-index: 5;
         }
-        /* Столбец удаления – непрозрачный фон */
+        /* Столбец удаления – закреплён, но без серого фона */
         .data-table td:last-child {
-            background-color: #fff;
-        }
-        .data-table tr:nth-child(even) td:last-child {
-            background-color: #f9f9f9;
-        }
-        .row-red td:last-child {
-            background-color: #ffcccc !important;
+            position: sticky;
+            right: 0;
+            background-color: inherit;
+            z-index: 5;
         }
 
         .data-table td:not(.link-col):not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:last-child) .editable-cell {
@@ -276,6 +273,7 @@
     function formatPercent(v) { return (v === 0 || isNaN(v) || v === null) ? '' : v + ' %'; }
     function formatDollar(v) { return (v === 0 || isNaN(v) || v === null) ? '' : v.toFixed(2) + ' $'; }
 
+    // Исправлено: комиссия берётся как есть (без деления на 100)
     function findCommission(categoryShort, price) {
         if (!categoryShort || !dbRows || dbRows.length === 0) return null;
         if (price <= 300) return null;
@@ -289,7 +287,7 @@
         else if (price <= 10000) comm = row.commG;
         else comm = row.commH;
         console.log(`[DB] Найдена комиссия для "${categoryShort}": ${comm}% (цена ${price}₽)`);
-        return comm || null;
+        return comm;   // возвращаем как есть, например 44
     }
 
     function recalcRow(idx) {
@@ -518,6 +516,7 @@
             else if (columns[i].group === '1688') th.classList.add('group-1688');
             else if (columns[i].group === 'wb') th.classList.add('group-wb');
             if (i === 3 || i === 17) th.classList.add('link-col');
+            // Закреплённые столбцы (Маржинальность, Рентабельность, Удаление)
             if (i >= columns.length - 3) {
                 th.classList.add('sticky-col');
                 th.setAttribute('data-col-index', i);
@@ -563,10 +562,11 @@
         document.body.removeChild(measureEl);
         table.insertBefore(colgroup, table.firstChild);
 
+        // Рассчитываем смещения для закреплённых столбцов
         const lastIdx = columns.length - 1;
-        stickyRightOffsets[lastIdx] = 0;
-        stickyRightOffsets[lastIdx - 1] = colWidths[lastIdx];
-        stickyRightOffsets[lastIdx - 2] = colWidths[lastIdx] + colWidths[lastIdx - 1];
+        stickyRightOffsets[lastIdx] = 0;                     // удаление
+        stickyRightOffsets[lastIdx - 1] = colWidths[lastIdx]; // рентабельность
+        stickyRightOffsets[lastIdx - 2] = colWidths[lastIdx] + colWidths[lastIdx - 1]; // маржинальность
 
         document.querySelectorAll('.sticky-col[data-col-index]').forEach(th => {
             const idx = parseInt(th.getAttribute('data-col-index'), 10);
@@ -589,6 +589,7 @@
             for (let j = 0; j < columns.length; j++) {
                 const td = document.createElement('td');
                 if (j === 3 || j === 17) td.classList.add('link-col');
+                // Закреплённые столбцы справа
                 if (j === lastIdx || j === lastIdx - 1 || j === lastIdx - 2) {
                     td.classList.add('sticky-col');
                     td.style.right = (stickyRightOffsets[j] || 0) + 'px';
@@ -712,6 +713,7 @@
         cells[39].textContent = (rentVal !== 0) ? rentVal.toFixed(2) + ' %' : '';
         cells[39].style.backgroundColor = (rentVal !== 0) ? getRentColor(rentVal) : '';
 
+        // Кнопка удаления (последний столбец)
         const delCell = cells[40];
         delCell.innerHTML = '';
         if (r.link || r.price || r.name) {
