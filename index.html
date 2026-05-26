@@ -130,39 +130,36 @@
         .delete-btn:hover { opacity: 1; }
 
         /* === Закрепление столбцов СЛЕВА === */
-        /* Первый столбец (Фото) */
         .data-table th:first-child,
         .data-table td:first-child {
             position: sticky;
             left: 0;
-            z-index: 12;                /* выше обычных, но ниже шапки (10) и правого sticky (5) — поднимем до 12 */
-            background-color: #fff;     /* для td */
+            z-index: 15;
         }
         .data-table th:first-child {
+            top: 0;
             background-color: #f1f3f4;
         }
-        /* Второй столбец (Название) */
+        .data-table td:first-child { background-color: #fff; }
+
         .data-table th:nth-child(2),
         .data-table td:nth-child(2) {
             position: sticky;
             left: 72px;
-            z-index: 12;
+            z-index: 15;
             background-color: #fff;
-            border-right: 2px solid #bbb;   /* <-- общая рамка для группы Фото+Название, едет вместе с Названием */
+            box-shadow: 2px 0 0 0 #bbb;   /* <-- рамка движется с ячейкой */
         }
         .data-table th:nth-child(2) {
+            top: 0;
             background-color: #f1f3f4;
         }
-        /* Убираем рамку у td первого столбца, чтобы не было двойной */
-        .data-table td:first-child {
-            border-right: none;
-        }
-        /* Чётные строки — белый фон для этих двух столбцов */
+
+        /* Чётные строки – белый фон */
         .data-table tr:nth-child(even) td:first-child,
         .data-table tr:nth-child(even) td:nth-child(2) {
             background-color: #fff !important;
         }
-        /* Красные строки */
         .row-red td:first-child,
         .row-red td:nth-child(2) {
             background-color: #ffcccc !important;
@@ -173,15 +170,10 @@
             position: sticky;
             z-index: 5;
         }
-        /* Маржинальность (38-й столбец) — левая рамка, едет с ним */
-        .data-table td:nth-child(38),
-        .data-table th:nth-child(38) {
-            border-left: 2px solid #bbb;
-        }
-        /* Рентабельность (39-й) и удаление (40-й) — без дополнительных рамок */
+        /* Маржинальность (39-й столбец) – левая рамка через тень */
         .data-table td:nth-child(39),
         .data-table th:nth-child(39) {
-            /* убираем возможную рамку */
+            box-shadow: -2px 0 0 0 #bbb;
         }
         .data-table td:last-child {
             position: sticky;
@@ -1034,11 +1026,16 @@
             window.open('https://calculator.ozon.ru/', '_blank');
         });
         ozonBtn.addEventListener('mousedown', (e) => {
-            if (e.button === 1) { // средняя кнопка (колёсико)
-                e.preventDefault();               // чтобы не было прокрутки страницы
-                const newTab = window.open('https://calculator.ozon.ru/', '_blank');
-                if (newTab) newTab.blur();        // убираем фокус с новой вкладки (не переключаемся)
-                window.focus();                   // возвращаем фокус на текущую страницу
+            if (e.button === 1) { // колёсико
+                e.preventDefault();
+                const a = document.createElement('a');
+                a.href = 'https://calculator.ozon.ru/';
+                a.target = '_blank';
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                const event = new MouseEvent('click', { button: 1, view: window, bubbles: true, cancelable: true });
+                a.dispatchEvent(event);
+                document.body.removeChild(a);
             }
         });
 
