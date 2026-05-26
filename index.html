@@ -46,22 +46,27 @@
             box-sizing: border-box;
         }
 
-        /* Шапка-2 (названия) – всегда сверху */
+        /* Шапка-2 (названия) – максимальный приоритет */
         .data-table th {
             background-color: #f1f3f4; font-weight: 600;
-            position: sticky; top: 0; z-index: 25;
+            position: sticky; top: 0; z-index: 30;
             border-bottom: 3px solid #ccc;
             height: 36px;
             line-height: 36px;
             text-align: center !important;
         }
 
-        /* Шапка-1 (параметры) – всегда снизу */
+        /* Шапка-1 (параметры) – самый низкий приоритет */
         .param-row th {
             z-index: 1;
             background-color: #f8f9fa;
             font-weight: normal;
             color: #333;
+        }
+        /* В закреплённых столбцах – прозрачная */
+        .param-row th.sticky-left,
+        .param-row th.sticky-col {
+            background-color: transparent !important;
         }
 
         /* Обычные ячейки данных */
@@ -69,47 +74,23 @@
             z-index: 10;
         }
 
-        /* Sticky-столбцы: левые */
-        .sticky-left {
-            position: sticky;
-            background-color: #fff;
-        }
-        .data-table th.sticky-left {
-            z-index: 25;
-        }
-        .data-table td.sticky-left {
-            z-index: 20;
-        }
-
-        /* Sticky-столбцы: правые */
-        .sticky-col {
-            position: sticky;
-            background-color: #fff;
-        }
-        .data-table th.sticky-col {
-            z-index: 25;
-        }
-        .data-table td.sticky-col {
-            z-index: 20;
-        }
+        /* Закреплённые столбцы (фото, название, маржа, рентабельность, корзина) – высокий приоритет */
+        .sticky-left,
+        .sticky-col,
         .data-table td:last-child {
             position: sticky;
-            right: 0;
+            z-index: 25;
+        }
+        .data-table td.sticky-left,
+        .data-table td.sticky-col,
+        .data-table td:last-child {
             background-color: #fff;
-            z-index: 20;
         }
         .row-red td:last-child {
             background-color: #ffcccc !important;
         }
 
-        /* Шапка-1 в закреплённых столбцах */
-        .param-row th.sticky-left,
-        .param-row th.sticky-col {
-            z-index: 1;
-            background-color: #f8f9fa !important;
-        }
-
-        /* Выравнивание заголовков */
+        /* Убираем левое выравнивание заголовков */
         .data-table th:nth-child(2),
         .data-table th:nth-child(3),
         .data-table th.link-col {
