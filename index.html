@@ -45,7 +45,6 @@
             text-overflow: ellipsis;
             box-sizing: border-box;
         }
-        /* === НОВАЯ ЧИСТАЯ СИСТЕМА СЛОЁВ === */
 
         /* Шапка-2 (названия) – всегда сверху */
         .data-table th {
@@ -76,10 +75,10 @@
             background-color: #fff;
         }
         .data-table th.sticky-left {
-            z-index: 25;   /* как вся шапка-2 */
+            z-index: 25;
         }
         .data-table td.sticky-left {
-            z-index: 20;   /* выше обычных td, но ниже шапки-2 */
+            z-index: 20;
         }
 
         /* Sticky-столбцы: правые */
@@ -91,9 +90,8 @@
             z-index: 25;
         }
         .data-table td.sticky-col {
-            z-index: 20;   /* выше обычных td */
+            z-index: 20;
         }
-        /* Последний столбец (удаление) тоже должен быть над остальными */
         .data-table td:last-child {
             position: sticky;
             right: 0;
@@ -104,14 +102,14 @@
             background-color: #ffcccc !important;
         }
 
-        /* Шапка-1 в закреплённых столбцах – не перекрывает названия */
+        /* Шапка-1 в закреплённых столбцах */
         .param-row th.sticky-left,
         .param-row th.sticky-col {
             z-index: 1;
             background-color: #f8f9fa !important;
         }
 
-        /* Убираем левое выравнивание заголовков */
+        /* Выравнивание заголовков */
         .data-table th:nth-child(2),
         .data-table th:nth-child(3),
         .data-table th.link-col {
@@ -123,7 +121,6 @@
             text-align: left !important;
         }
 
-        /* Остальные стили (без изменений) */
         .data-table th:first-child, .data-table td:first-child {
             width: 72px !important; min-width: 72px !important; max-width: 72px !important;
             text-align: center;
