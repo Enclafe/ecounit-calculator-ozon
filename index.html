@@ -134,12 +134,18 @@
             background-color: inherit;
             z-index: 5;
         }
-        /* Столбец удаления – закреплён, но без серого фона */
+        /* Столбец удаления – непрозрачный фон */
         .data-table td:last-child {
             position: sticky;
             right: 0;
-            background-color: inherit;
+            background-color: #fff;
             z-index: 5;
+        }
+        .data-table tr:nth-child(even) td:last-child {
+            background-color: #f9f9f9;
+        }
+        .row-red td:last-child {
+            background-color: #ffcccc !important;
         }
 
         .data-table td:not(.link-col):not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:last-child) .editable-cell {
@@ -273,7 +279,7 @@
     function formatPercent(v) { return (v === 0 || isNaN(v) || v === null) ? '' : v + ' %'; }
     function formatDollar(v) { return (v === 0 || isNaN(v) || v === null) ? '' : v.toFixed(2) + ' $'; }
 
-    // Исправлено: комиссия берётся как есть (без деления на 100)
+    // Исправлено: комиссия умножается на 100, если Excel вернул долю (0.38 → 38)
     function findCommission(categoryShort, price) {
         if (!categoryShort || !dbRows || dbRows.length === 0) return null;
         if (price <= 300) return null;
@@ -286,8 +292,12 @@
         else if (price <= 5000) comm = row.commF;
         else if (price <= 10000) comm = row.commG;
         else comm = row.commH;
+        // Если значение меньше 1, значит Excel отдал долю (0.38), умножаем на 100
+        if (comm > 0 && comm <= 1) {
+            comm = Math.round(comm * 100);
+        }
         console.log(`[DB] Найдена комиссия для "${categoryShort}": ${comm}% (цена ${price}₽)`);
-        return comm;   // возвращаем как есть, например 44
+        return comm || null;
     }
 
     function recalcRow(idx) {
@@ -562,11 +572,10 @@
         document.body.removeChild(measureEl);
         table.insertBefore(colgroup, table.firstChild);
 
-        // Рассчитываем смещения для закреплённых столбцов
         const lastIdx = columns.length - 1;
-        stickyRightOffsets[lastIdx] = 0;                     // удаление
-        stickyRightOffsets[lastIdx - 1] = colWidths[lastIdx]; // рентабельность
-        stickyRightOffsets[lastIdx - 2] = colWidths[lastIdx] + colWidths[lastIdx - 1]; // маржинальность
+        stickyRightOffsets[lastIdx] = 0;
+        stickyRightOffsets[lastIdx - 1] = colWidths[lastIdx];
+        stickyRightOffsets[lastIdx - 2] = colWidths[lastIdx] + colWidths[lastIdx - 1];
 
         document.querySelectorAll('.sticky-col[data-col-index]').forEach(th => {
             const idx = parseInt(th.getAttribute('data-col-index'), 10);
@@ -589,7 +598,6 @@
             for (let j = 0; j < columns.length; j++) {
                 const td = document.createElement('td');
                 if (j === 3 || j === 17) td.classList.add('link-col');
-                // Закреплённые столбцы справа
                 if (j === lastIdx || j === lastIdx - 1 || j === lastIdx - 2) {
                     td.classList.add('sticky-col');
                     td.style.right = (stickyRightOffsets[j] || 0) + 'px';
@@ -713,7 +721,7 @@
         cells[39].textContent = (rentVal !== 0) ? rentVal.toFixed(2) + ' %' : '';
         cells[39].style.backgroundColor = (rentVal !== 0) ? getRentColor(rentVal) : '';
 
-        // Кнопка удаления (последний столбец)
+        // Кнопка удаления
         const delCell = cells[40];
         delCell.innerHTML = '';
         if (r.link || r.price || r.name) {
@@ -731,6 +739,7 @@
         else tr.classList.remove('row-red');
     }
 
+    // ========== Вспомогательные функции (без изменений) ==========
     function createEditableNumber(value, onSave, showZero = false) {
         const div = document.createElement('div'); div.className = 'editable-cell';
         const displayVal = (value === 0 && showZero) ? '0' : ((value === 0 || value === null || value === '') ? '' : value);
