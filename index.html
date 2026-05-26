@@ -134,27 +134,14 @@
         .sticky-col {
             position: sticky;
             background-color: inherit;
-            z-index: 15;
+            z-index: 5;
         }
-        .data-table th.sticky-col {
-            top: 0;
-            background-color: #f1f3f4;
-        }
-        .data-table td.sticky-col {
-            background-color: #fff;
-        }
-        .data-table tr:nth-child(even) td.sticky-col {
-            background-color: #fff;   /* белый фон для чётных строк */
-        }
-        .row-red td.sticky-col {
-            background-color: #ffcccc !important;
-        }
-        /* удаление – всегда белый (как ты просил) */
+        /* Удаление — всегда белый */
         .data-table td:last-child {
-            background-color: #fff !important;
             position: sticky;
             right: 0;
-            z-index: 15;
+            background-color: #fff;
+            z-index: 5;
         }
         .row-red td:last-child {
             background-color: #ffcccc !important;
@@ -164,35 +151,7 @@
         .sticky-left {
             position: sticky;
             background-color: inherit;
-            z-index: 20;               /* выше правых */
-        }
-        .data-table th.sticky-left {
-            top: 0;
-            background-color: #f1f3f4;
-        }
-        .data-table td.sticky-left {
-            background-color: #fff;
-        }
-        .data-table tr:nth-child(even) td.sticky-left {
-            background-color: #fff;   /* белый фон для чётных строк */
-        }
-        .row-red td.sticky-left {
-            background-color: #ffcccc !important;
-        }
-
-        /* Рамки-разделители (двигаются с ячейками) */
-        .data-table td.sticky-left:nth-child(2),
-        .data-table th.sticky-left:nth-child(2) {
-            box-shadow: 2px 0 0 0 #bbb;   /* справа от Названия */
-        }
-        .data-table td.sticky-col:nth-child(39),
-        .data-table th.sticky-col:nth-child(39) {
-            box-shadow: -2px 0 0 0 #bbb;  /* слева от Маржинальности */
-        }
-        /* Чтобы тень была видна, разрешаем overflow у этих ячеек */
-        .data-table td.sticky-left:nth-child(2),
-        .data-table td.sticky-col:nth-child(39) {
-            overflow: visible;
+            z-index: 5;
         }
 
         .data-table td:not(.link-col):not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:last-child) .editable-cell {
@@ -850,7 +809,7 @@
         else tr.classList.remove('row-red');
     }
 
-    // ========== Вспомогательные функции (без изменений) ==========
+    // ========== Вспомогательные функции ==========
     function createEditableNumber(value, onSave, showZero = false) {
         const div = document.createElement('div'); div.className = 'editable-cell';
         const displayVal = (value === 0 && showZero) ? '0' : ((value === 0 || value === null || value === '') ? '' : value);
