@@ -26,6 +26,7 @@
         .upload-btn {
             background: white; color: #34A853; border: none; padding: 8px 16px; border-radius: 4px;
             font-weight: 600; cursor: pointer; font-size: 0.9rem;
+            text-decoration: none; display: inline-block;
         }
         .upload-btn:hover { background: #e8f5e9; }
         .table-container { flex: 1; overflow: auto; padding: 1rem; }
@@ -134,7 +135,7 @@
         .data-table td:first-child {
             position: sticky;
             left: 0;
-            z-index: 15;
+            z-index: 20;
         }
         .data-table th:first-child {
             top: 0;
@@ -146,16 +147,15 @@
         .data-table td:nth-child(2) {
             position: sticky;
             left: 72px;
-            z-index: 15;
+            z-index: 20;
             background-color: #fff;
-            box-shadow: 2px 0 0 0 #bbb;   /* <-- рамка движется с ячейкой */
+            box-shadow: 2px 0 0 0 #bbb;
         }
         .data-table th:nth-child(2) {
             top: 0;
             background-color: #f1f3f4;
         }
 
-        /* Чётные строки – белый фон */
         .data-table tr:nth-child(even) td:first-child,
         .data-table tr:nth-child(even) td:nth-child(2) {
             background-color: #fff !important;
@@ -168,9 +168,8 @@
         /* === Закрепление столбцов СПРАВА === */
         .sticky-col {
             position: sticky;
-            z-index: 5;
+            z-index: 15;
         }
-        /* Маржинальность (39-й столбец) – левая рамка через тень */
         .data-table td:nth-child(39),
         .data-table th:nth-child(39) {
             box-shadow: -2px 0 0 0 #bbb;
@@ -179,7 +178,7 @@
             position: sticky;
             right: 0;
             background-color: #fff;
-            z-index: 5;
+            z-index: 15;
         }
         .row-red td:last-child {
             background-color: #ffcccc !important;
@@ -194,7 +193,7 @@
 <div class="header">
     <h1>ECOUNIT</h1>
     <div>
-        <button class="upload-btn" id="ozonCalcBtn" style="margin-right: 8px;">OZON калькулятор</button>
+        <a class="upload-btn" id="ozonCalcBtn" href="https://calculator.ozon.ru/" target="_blank" style="margin-right: 8px;">OZON калькулятор</a>
         <button class="upload-btn" id="sppBtn" style="margin-right: 8px;">СПП</button>
         <button class="upload-btn" id="uploadDbBtn">Загрузить БД</button>
     </div>
@@ -589,7 +588,6 @@
                 th.classList.add('sticky-col');
                 th.setAttribute('data-col-index', i);
             }
-            // последний столбец – кнопка очистки
             if (i === columns.length - 1) {
                 th.innerHTML = '';
                 th.style.textAlign = 'center';
@@ -794,7 +792,6 @@
         cells[39].textContent = (rentVal !== 0) ? rentVal.toFixed(2) + ' %' : '';
         cells[39].style.backgroundColor = (rentVal !== 0) ? getRentColor(rentVal) : '';
 
-        // Кнопка удаления
         const delCell = cells[40];
         delCell.innerHTML = '';
         if (r.link || r.price || r.name) {
@@ -1019,24 +1016,6 @@
                 if (file) parseExcel(file);
             });
             input.click();
-        });
-
-        const ozonBtn = document.getElementById('ozonCalcBtn');
-        ozonBtn.addEventListener('click', () => {
-            window.open('https://calculator.ozon.ru/', '_blank');
-        });
-        ozonBtn.addEventListener('mousedown', (e) => {
-            if (e.button === 1) { // колёсико
-                e.preventDefault();
-                const a = document.createElement('a');
-                a.href = 'https://calculator.ozon.ru/';
-                a.target = '_blank';
-                a.style.display = 'none';
-                document.body.appendChild(a);
-                const event = new MouseEvent('click', { button: 1, view: window, bubbles: true, cancelable: true });
-                a.dispatchEvent(event);
-                document.body.removeChild(a);
-            }
         });
 
         const sppModal = createSppModal();
