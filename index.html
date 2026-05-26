@@ -135,20 +135,20 @@
             position: sticky;
             left: 0;
             z-index: 6;
-            background-color: #fff;
-            border-right: 2px solid #bbb;
+            background-color: #fff !important;
         }
         .data-table th:nth-child(2),
         .data-table td:nth-child(2) {
             position: sticky;
             left: 72px;
             z-index: 6;
-            background-color: #fff;
-            border-right: 2px solid #bbb;
+            background-color: #fff !important;
+            border-right: 2px solid #bbb; /* общая рамка для Фото+Название */
         }
+        /* чётные строки — убираем серый фон для закреплённых */
         .data-table tr:nth-child(even) td:first-child,
         .data-table tr:nth-child(even) td:nth-child(2) {
-            background-color: #f9f9f9;
+            background-color: #fff !important;
         }
         .row-red td:first-child,
         .row-red td:nth-child(2) {
@@ -166,6 +166,10 @@
             position: sticky;
             background-color: inherit;
             z-index: 5;
+        }
+        /* Рамка только для Маржинальности (38-й столбец) */
+        .data-table td:nth-child(39),
+        .data-table th:nth-child(39) {
             border-left: 2px solid #bbb;
         }
         .data-table td:last-child {
@@ -198,7 +202,7 @@
         <tbody id="tableBody"></tbody>
     </table>
 </div>
-<div class="footer">© 2026 Все права защищены. Сайт by ANK</div>
+<div class="footer">© 2026 EGOR SH. Все права защищены.</div>
 
 <script>
     // ========== Глобальные параметры ==========
@@ -392,7 +396,6 @@
         const cleanPrice = String(item.price || '').replace(/\s/g, '').replace(',', '.');
         let numericPrice = parseFloat(cleanPrice) || 0;
 
-        // Корректировка цены с учётом средней скидки (СПП)
         if (globalParams.sppDiscount > 0 && numericPrice > 0) {
             let corrected = numericPrice / (1 - globalParams.sppDiscount / 100);
             corrected = Math.round(corrected);
@@ -449,6 +452,17 @@
         Object.assign(rowsData[ROWS - 1], createEmptyRow());
         rowsData[ROWS - 1].id = ROWS - 1;
         for (let i = idx; i < ROWS; i++) {
+            recalcRow(i);
+            if (rowsDOM[i]) updateRowDisplay(i);
+        }
+        saveToStorage();
+    }
+
+    function clearAllRows() {
+        if (!confirm('Удалить ВСЕ товары?')) return;
+        for (let i = 0; i < ROWS; i++) {
+            Object.assign(rowsData[i], createEmptyRow());
+            rowsData[i].id = i;
             recalcRow(i);
             if (rowsDOM[i]) updateRowDisplay(i);
         }
@@ -571,6 +585,21 @@
             if (i >= columns.length - 3) {
                 th.classList.add('sticky-col');
                 th.setAttribute('data-col-index', i);
+            }
+            // Последний столбец (удаление) — кнопка "Очистить всё"
+            if (i === columns.length - 1) {
+                th.innerHTML = '';
+                th.style.textAlign = 'center';
+                const clearBtn = document.createElement('button');
+                clearBtn.className = 'delete-btn';
+                clearBtn.textContent = '🗑️';
+                clearBtn.title = 'Очистить все товары';
+                clearBtn.style.fontSize = '1.2rem';
+                clearBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    clearAllRows();
+                });
+                th.appendChild(clearBtn);
             }
             titleCells.push({th, start: i, end: i + span - 1, span});
             rowNames.appendChild(th);
@@ -921,7 +950,7 @@
         card.style.cssText = 'background:#fff; border-radius:12px; padding:24px 28px; min-width:360px; box-shadow:0 8px 24px rgba(0,0,0,0.15); font-family:Inter,system-ui,sans-serif;';
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <span style="font-size:1.2rem; font-weight:600; color:#34A853;">СПП</span>
+                <span style="font-size:1.2rem; font-weight:700; color:#34A853;">СПП</span>
                 <button id="sppClose" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#999;">&times;</button>
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px 16px; align-items:center; margin-bottom:20px;">
@@ -989,8 +1018,15 @@
             input.click();
         });
 
-        document.getElementById('ozonCalcBtn').addEventListener('click', () => {
+        const ozonBtn = document.getElementById('ozonCalcBtn');
+        ozonBtn.addEventListener('click', () => {
             window.open('https://calculator.ozon.ru/', '_blank');
+        });
+        ozonBtn.addEventListener('mousedown', (e) => {
+            if (e.button === 1) { // средняя кнопка (колёсико)
+                e.preventDefault();
+                window.open('https://calculator.ozon.ru/', '_blank');
+            }
         });
 
         const sppModal = createSppModal();
