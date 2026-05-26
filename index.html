@@ -1024,16 +1024,18 @@
                 const left = parseFloat(leftInputs[i].value);
                 const right = parseFloat(rightInputs[i].value);
                 if (!isNaN(left) && left > 0 && !isNaN(right) && right > 0) {
-                    discounts.push(((left - right) / left) * 100);
+                    const exact = ((left - right) / left) * 100;
+                    discounts.push(Math.round(exact)); // округление до целого по математике
                 }
             }
             if (discounts.length === 0) {
                 globalParams.sppDiscount = 0;
                 document.getElementById('sppResult').textContent = 'Средняя скидка: 0%';
             } else {
-                const avg = discounts.reduce((a,b) => a+b, 0) / discounts.length;
-                globalParams.sppDiscount = avg;
-                document.getElementById('sppResult').textContent = `Средняя скидка: ${avg.toFixed(1)}%`;
+                const sum = discounts.reduce((a,b) => a+b, 0);
+                const avg = sum / discounts.length;
+                globalParams.sppDiscount = Math.floor(avg); // округление вниз до целого
+                document.getElementById('sppResult').textContent = `Средняя скидка: ${Math.floor(avg)}%`;
             }
             saveFields();
             saveToStorage();
