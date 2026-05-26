@@ -130,10 +130,29 @@
         }
         .delete-btn:hover { opacity: 1; }
 
-        /* ===== Sticky-столбцы: левые (фото, название) ===== */
+        /* === Sticky-столбцы: правые (маржинальность, рентабельность, удаление) === */
+        .sticky-col {
+            position: sticky;
+            z-index: 15;
+        }
+        .data-table th.sticky-col {
+            top: 0;
+            background-color: #f1f3f4;
+        }
+        .data-table td.sticky-col {
+            background-color: #fff;
+        }
+        .data-table tr:nth-child(even) td.sticky-col {
+            background-color: #f9f9f9;
+        }
+        .row-red td.sticky-col {
+            background-color: #ffcccc !important;
+        }
+
+        /* === Sticky-столбцы: левые (фото, название) === */
         .sticky-left {
             position: sticky;
-            z-index: 20;
+            z-index: 20;               /* выше правых */
         }
         .data-table th.sticky-left {
             top: 0;
@@ -143,56 +162,29 @@
             background-color: #fff;
         }
         .data-table tr:nth-child(even) td.sticky-left {
-            background-color: #fff !important;
+            background-color: #f9f9f9;
         }
         .row-red td.sticky-left {
             background-color: #ffcccc !important;
         }
 
-        /* ===== Sticky-столбцы: правые (маржинальность, рентабельность, удаление) ===== */
-        .sticky-right {
-            position: sticky;
-            z-index: 15;
-        }
-        .data-table th.sticky-right {
-            top: 0;
-            background-color: #f1f3f4;
-        }
-        .data-table td.sticky-right {
-            background-color: #fff;
-        }
-        .data-table tr:nth-child(even) td.sticky-right {
-            background-color: #fff !important;
-        }
-        .row-red td.sticky-right {
-            background-color: #ffcccc !important;
-        }
-
-        /* Рамки-разделители через тень (двигаются с ячейками) */
+        /* Рамки-разделители (двигаются с ячейками) */
         .data-table td.sticky-left:nth-child(2),
         .data-table th.sticky-left:nth-child(2) {
             box-shadow: 2px 0 0 0 #bbb;   /* справа от Названия */
         }
-        .data-table td.sticky-right:nth-child(39),
-        .data-table th.sticky-right:nth-child(39) {
+        .data-table td.sticky-col:nth-child(39),
+        .data-table th.sticky-col:nth-child(39) {
             box-shadow: -2px 0 0 0 #bbb;  /* слева от Маржинальности */
         }
-        /* Чтобы тень была видна, убираем обрезку на этих ячейках */
+        /* Чтобы тень была видна, разрешаем overflow у этих ячеек */
         .data-table td.sticky-left:nth-child(2),
-        .data-table td.sticky-right:nth-child(39),
-        .data-table td.sticky-right:nth-child(40),
-        .data-table td.sticky-right:nth-child(41) {
+        .data-table td.sticky-col:nth-child(39) {
             overflow: visible;
         }
-        /* Текст внутри обрезаем через span */
-        .data-table td.sticky-left:nth-child(2) span,
-        .data-table td.sticky-right:nth-child(39) span,
-        .data-table td.sticky-right:nth-child(40) span,
-        .data-table td.sticky-right:nth-child(41) span {
-            display: block;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+
+        .data-table td:not(.link-col):not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:last-child) .editable-cell {
+            justify-content: center;
         }
     </style>
 </head>
@@ -557,7 +549,7 @@
                 th.classList.add('sticky-left');
                 th.style.left = '72px';
             } else if (i >= columns.length - 3) {
-                th.classList.add('sticky-right');
+                th.classList.add('sticky-col');
                 th.setAttribute('data-col-index', i);
             }
             const paramCol = columns.slice(i, i + span).find(c => c.paramType && c.paramId);
@@ -611,7 +603,7 @@
                 th.classList.add('sticky-left');
                 th.style.left = '72px';
             } else if (i === 38 || i === 39 || i === 40) {
-                th.classList.add('sticky-right');
+                th.classList.add('sticky-col');
                 th.setAttribute('data-col-index', i);
             }
 
@@ -676,7 +668,7 @@
         stickyRightOffsets[lastIdx - 1] = colWidths[lastIdx];
         stickyRightOffsets[lastIdx - 2] = colWidths[lastIdx] + colWidths[lastIdx - 1];
 
-        document.querySelectorAll('.sticky-right[data-col-index]').forEach(th => {
+        document.querySelectorAll('.sticky-col[data-col-index]').forEach(th => {
             const idx = parseInt(th.getAttribute('data-col-index'), 10);
             if (stickyRightOffsets[idx] !== undefined) {
                 th.style.right = stickyRightOffsets[idx] + 'px';
@@ -706,7 +698,7 @@
                     td.classList.add('sticky-left');
                     td.style.left = '72px';
                 } else if (j === lastIdx || j === lastIdx - 1 || j === lastIdx - 2) {
-                    td.classList.add('sticky-right');
+                    td.classList.add('sticky-col');
                     td.style.right = (stickyRightOffsets[j] || 0) + 'px';
                 }
 
@@ -738,6 +730,7 @@
             if (val.length) val = val.charAt(0).toUpperCase() + val.slice(1);
             r.name = val; recalcRow(idx); updateRowDisplay(idx); saveToStorage();
         });
+        if (r.name) nameDiv.title = r.name;
         cells[1].appendChild(nameDiv);
 
         cells[2].textContent = r.category || '';
@@ -821,17 +814,11 @@
         cells[37].textContent = formatCurrency(r.netProfit);
 
         const marginVal = r.margin;
-        cells[38].innerHTML = '';
-        const marginSpan = document.createElement('span');
-        marginSpan.textContent = (marginVal !== 0) ? marginVal.toFixed(2) + ' %' : '';
-        cells[38].appendChild(marginSpan);
+        cells[38].textContent = (marginVal !== 0) ? marginVal.toFixed(2) + ' %' : '';
         cells[38].style.backgroundColor = (marginVal !== 0) ? getMarginColor(marginVal) : '';
 
         const rentVal = r.rent;
-        cells[39].innerHTML = '';
-        const rentSpan = document.createElement('span');
-        rentSpan.textContent = (rentVal !== 0) ? rentVal.toFixed(2) + ' %' : '';
-        cells[39].appendChild(rentSpan);
+        cells[39].textContent = (rentVal !== 0) ? rentVal.toFixed(2) + ' %' : '';
         cells[39].style.backgroundColor = (rentVal !== 0) ? getRentColor(rentVal) : '';
 
         const delCell = cells[40];
@@ -851,7 +838,7 @@
         else tr.classList.remove('row-red');
     }
 
-    // ========== Вспомогательные функции ==========
+    // ========== Вспомогательные функции (без изменений) ==========
     function createEditableNumber(value, onSave, showZero = false) {
         const div = document.createElement('div'); div.className = 'editable-cell';
         const displayVal = (value === 0 && showZero) ? '0' : ((value === 0 || value === null || value === '') ? '' : value);
@@ -895,15 +882,7 @@
 
     function createEditableText(value, onSave) {
         const div = document.createElement('div'); div.className = 'editable-cell';
-        div.style.overflow = 'visible';
-        const span = document.createElement('span');
-        span.textContent = value || '';
-        span.style.overflow = 'hidden';
-        span.style.textOverflow = 'ellipsis';
-        span.style.whiteSpace = 'nowrap';
-        span.style.display = 'block';
-        div.appendChild(span);
-
+        div.textContent = value || '';
         div.addEventListener('click', e => {
             e.stopPropagation(); if (div.querySelector('input')) return;
             const input = document.createElement('input'); input.type = 'text'; input.value = value;
