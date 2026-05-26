@@ -26,7 +26,6 @@
         .upload-btn {
             background: white; color: #34A853; border: none; padding: 8px 16px; border-radius: 4px;
             font-weight: 600; cursor: pointer; font-size: 0.9rem;
-            font-family: inherit; text-decoration: none; display: inline-block;
         }
         .upload-btn:hover { background: #e8f5e9; }
         .table-container { flex: 1; overflow: auto; padding: 1rem; }
@@ -130,80 +129,34 @@
         }
         .delete-btn:hover { opacity: 1; }
 
-        /* ===== Sticky-столбцы: левые (фото, название) ===== */
-        .sticky-left {
+        .sticky-col {
             position: sticky;
-            z-index: 20;
+            background-color: inherit;
+            z-index: 5;
         }
-        .data-table th.sticky-left {
-            top: 0;
-            background-color: #f1f3f4;
-        }
-        .data-table td.sticky-left {
+        /* Столбец удаления – непрозрачный фон */
+        .data-table td:last-child {
+            position: sticky;
+            right: 0;
             background-color: #fff;
+            z-index: 5;
         }
-        .data-table tr:nth-child(even) td.sticky-left {
-            background-color: #fff !important;
+        .data-table tr:nth-child(even) td:last-child {
+            background-color: #f9f9f9;
         }
-        .row-red td.sticky-left {
+        .row-red td:last-child {
             background-color: #ffcccc !important;
         }
 
-        /* ===== Sticky-столбцы: правые (маржинальность, рентабельность, удаление) ===== */
-        .sticky-right {
-            position: sticky;
-            z-index: 15;
-        }
-        .data-table th.sticky-right {
-            top: 0;
-            background-color: #f1f3f4;
-        }
-        .data-table td.sticky-right {
-            background-color: #fff;
-        }
-        .data-table tr:nth-child(even) td.sticky-right {
-            background-color: #fff !important;
-        }
-        .row-red td.sticky-right {
-            background-color: #ffcccc !important;
-        }
-
-        /* Рамки-разделители через тень (двигаются с ячейками) */
-        .data-table td.sticky-left:nth-child(2),
-        .data-table th.sticky-left:nth-child(2) {
-            box-shadow: 2px 0 0 0 #bbb;   /* справа от Названия */
-        }
-        .data-table td.sticky-right:nth-child(39),
-        .data-table th.sticky-right:nth-child(39) {
-            box-shadow: -2px 0 0 0 #bbb;  /* слева от Маржинальности */
-        }
-        /* Чтобы тень была видна, убираем обрезку на этих ячейках */
-        .data-table td.sticky-left:nth-child(2),
-        .data-table td.sticky-right:nth-child(39),
-        .data-table td.sticky-right:nth-child(40),
-        .data-table td.sticky-right:nth-child(41) {
-            overflow: visible;
-        }
-        /* Текст внутри обрезаем через span */
-        .data-table td.sticky-left:nth-child(2) span,
-        .data-table td.sticky-right:nth-child(39) span,
-        .data-table td.sticky-right:nth-child(40) span,
-        .data-table td.sticky-right:nth-child(41) span {
-            display: block;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+        .data-table td:not(.link-col):not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:last-child) .editable-cell {
+            justify-content: center;
         }
     </style>
 </head>
 <body>
 <div class="header">
     <h1>ECOUNIT</h1>
-    <div>
-        <a class="upload-btn" id="ozonCalcBtn" href="https://calculator.ozon.ru/" target="_blank" style="margin-right: 8px;">OZON калькулятор</a>
-        <button class="upload-btn" id="sppBtn" style="margin-right: 8px;">СПП</button>
-        <button class="upload-btn" id="uploadDbBtn">Загрузить БД</button>
-    </div>
+    <button class="upload-btn" id="uploadDbBtn">Загрузить БД</button>
 </div>
 <div class="table-container">
     <table class="data-table" id="mainTable">
@@ -211,7 +164,7 @@
         <tbody id="tableBody"></tbody>
     </table>
 </div>
-<div class="footer">© 2026 EGOR SH. Все права защищены.</div>
+<div class="footer">© 2026 Все права защищены. Сайт by ANK</div>
 
 <script>
     // ========== Глобальные параметры ==========
@@ -220,8 +173,7 @@
         lastMilePercent: 0, returnsPercent: 0, usdRate: 90, usdRateMarkup: 8,
         cnyRate: 12.5, cnyRateMarkup: 8, logisticTariff: 1.5,
         commission1688Percent: 0, brakPercent: 0, reklamaPercent: 0,
-        upakovkaRub: 0, procheePercent: 0, nalogPercent: 0,
-        sppDiscount: 0
+        upakovkaRub: 0, procheePercent: 0, nalogPercent: 0
     };
     let rowsData = [];
     const ROWS = 500;
@@ -327,6 +279,7 @@
     function formatPercent(v) { return (v === 0 || isNaN(v) || v === null) ? '' : v + ' %'; }
     function formatDollar(v) { return (v === 0 || isNaN(v) || v === null) ? '' : v.toFixed(2) + ' $'; }
 
+    // Исправлено: комиссия умножается на 100, если Excel вернул долю (0.38 → 38)
     function findCommission(categoryShort, price) {
         if (!categoryShort || !dbRows || dbRows.length === 0) return null;
         if (price <= 300) return null;
@@ -339,6 +292,7 @@
         else if (price <= 5000) comm = row.commF;
         else if (price <= 10000) comm = row.commG;
         else comm = row.commH;
+        // Если значение меньше 1, значит Excel отдал долю (0.38), умножаем на 100
         if (comm > 0 && comm <= 1) {
             comm = Math.round(comm * 100);
         }
@@ -403,15 +357,7 @@
 
     window.addItemFromExtension = function(item) {
         const cleanPrice = String(item.price || '').replace(/\s/g, '').replace(',', '.');
-        let numericPrice = parseFloat(cleanPrice) || 0;
-
-        if (globalParams.sppDiscount > 0 && numericPrice > 0) {
-            let corrected = numericPrice / (1 - globalParams.sppDiscount / 100);
-            corrected = Math.round(corrected);
-            if (corrected >= 300 && corrected <= 400) corrected = 300;
-            numericPrice = corrected;
-        }
-
+        const numericPrice = parseFloat(cleanPrice) || 0;
         const emptyRow = rowsData.find(r => !r.link);
         if (!emptyRow) return;
         emptyRow.photo = item.photoUrl || '';
@@ -461,17 +407,6 @@
         Object.assign(rowsData[ROWS - 1], createEmptyRow());
         rowsData[ROWS - 1].id = ROWS - 1;
         for (let i = idx; i < ROWS; i++) {
-            recalcRow(i);
-            if (rowsDOM[i]) updateRowDisplay(i);
-        }
-        saveToStorage();
-    }
-
-    function clearAllRows() {
-        if (!confirm('Удалить ВСЕ товары?')) return;
-        for (let i = 0; i < ROWS; i++) {
-            Object.assign(rowsData[i], createEmptyRow());
-            rowsData[i].id = i;
             recalcRow(i);
             if (rowsDOM[i]) updateRowDisplay(i);
         }
@@ -549,17 +484,6 @@
             const th = document.createElement('th');
             th.style.backgroundColor = '#f8f9fa';
             if (span > 1) th.colSpan = span;
-            // sticky-классы для левых и правых
-            if (i === 0) {
-                th.classList.add('sticky-left');
-                th.style.left = '0px';
-            } else if (i === 1) {
-                th.classList.add('sticky-left');
-                th.style.left = '72px';
-            } else if (i >= columns.length - 3) {
-                th.classList.add('sticky-right');
-                th.setAttribute('data-col-index', i);
-            }
             const paramCol = columns.slice(i, i + span).find(c => c.paramType && c.paramId);
             if (paramCol) {
                 const wrapper = document.createElement('div');
@@ -602,33 +526,10 @@
             else if (columns[i].group === '1688') th.classList.add('group-1688');
             else if (columns[i].group === 'wb') th.classList.add('group-wb');
             if (i === 3 || i === 17) th.classList.add('link-col');
-
-            // sticky-классы
-            if (i === 0) {
-                th.classList.add('sticky-left');
-                th.style.left = '0px';
-            } else if (i === 1) {
-                th.classList.add('sticky-left');
-                th.style.left = '72px';
-            } else if (i === 38 || i === 39 || i === 40) {
-                th.classList.add('sticky-right');
+            // Закреплённые столбцы (Маржинальность, Рентабельность, Удаление)
+            if (i >= columns.length - 3) {
+                th.classList.add('sticky-col');
                 th.setAttribute('data-col-index', i);
-            }
-
-            // последний столбец – кнопка очистки
-            if (i === columns.length - 1) {
-                th.innerHTML = '';
-                th.style.textAlign = 'center';
-                const clearBtn = document.createElement('button');
-                clearBtn.className = 'delete-btn';
-                clearBtn.textContent = '🗑️';
-                clearBtn.title = 'Очистить все товары';
-                clearBtn.style.fontSize = '1.2rem';
-                clearBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    clearAllRows();
-                });
-                th.appendChild(clearBtn);
             }
             titleCells.push({th, start: i, end: i + span - 1, span});
             rowNames.appendChild(th);
@@ -676,7 +577,7 @@
         stickyRightOffsets[lastIdx - 1] = colWidths[lastIdx];
         stickyRightOffsets[lastIdx - 2] = colWidths[lastIdx] + colWidths[lastIdx - 1];
 
-        document.querySelectorAll('.sticky-right[data-col-index]').forEach(th => {
+        document.querySelectorAll('.sticky-col[data-col-index]').forEach(th => {
             const idx = parseInt(th.getAttribute('data-col-index'), 10);
             if (stickyRightOffsets[idx] !== undefined) {
                 th.style.right = stickyRightOffsets[idx] + 'px';
@@ -697,19 +598,10 @@
             for (let j = 0; j < columns.length; j++) {
                 const td = document.createElement('td');
                 if (j === 3 || j === 17) td.classList.add('link-col');
-
-                // sticky-классы
-                if (j === 0) {
-                    td.classList.add('sticky-left');
-                    td.style.left = '0px';
-                } else if (j === 1) {
-                    td.classList.add('sticky-left');
-                    td.style.left = '72px';
-                } else if (j === lastIdx || j === lastIdx - 1 || j === lastIdx - 2) {
-                    td.classList.add('sticky-right');
+                if (j === lastIdx || j === lastIdx - 1 || j === lastIdx - 2) {
+                    td.classList.add('sticky-col');
                     td.style.right = (stickyRightOffsets[j] || 0) + 'px';
                 }
-
                 tr.appendChild(td);
             }
             tbody.appendChild(tr);
@@ -718,8 +610,8 @@
         for (let i = 0; i < ROWS; i++) updateRowDisplay(i);
     }
 
-    function getMarginColor(v) { return v < 8 ? '#ffcccc' : v <= 15 ? '#fff2cc' : v <= 22 ? '#b7e1cd' : '#8ed6b3'; }
-    function getRentColor(v) { return v < 30 ? '#ffcccc' : v <= 70 ? '#fff2cc' : v <= 100 ? '#b7e1cd' : '#8ed6b3'; }
+    function getMarginColor(v) { return v <= 8 ? '#f4cccc' : v <= 15 ? '#fff2cc' : v <= 22 ? '#b7e1cd' : '#8ed6b3'; }
+    function getRentColor(v) { return v <= 30 ? '#f4cccc' : v <= 70 ? '#fff2cc' : v <= 100 ? '#b7e1cd' : '#8ed6b3'; }
 
     function updateRowDisplay(idx) {
         const tr = rowsDOM[idx]; if (!tr) return;
@@ -738,6 +630,7 @@
             if (val.length) val = val.charAt(0).toUpperCase() + val.slice(1);
             r.name = val; recalcRow(idx); updateRowDisplay(idx); saveToStorage();
         });
+        if (r.name) nameDiv.title = r.name;
         cells[1].appendChild(nameDiv);
 
         cells[2].textContent = r.category || '';
@@ -821,19 +714,14 @@
         cells[37].textContent = formatCurrency(r.netProfit);
 
         const marginVal = r.margin;
-        cells[38].innerHTML = '';
-        const marginSpan = document.createElement('span');
-        marginSpan.textContent = (marginVal !== 0) ? marginVal.toFixed(2) + ' %' : '';
-        cells[38].appendChild(marginSpan);
+        cells[38].textContent = (marginVal !== 0) ? marginVal.toFixed(2) + ' %' : '';
         cells[38].style.backgroundColor = (marginVal !== 0) ? getMarginColor(marginVal) : '';
 
         const rentVal = r.rent;
-        cells[39].innerHTML = '';
-        const rentSpan = document.createElement('span');
-        rentSpan.textContent = (rentVal !== 0) ? rentVal.toFixed(2) + ' %' : '';
-        cells[39].appendChild(rentSpan);
+        cells[39].textContent = (rentVal !== 0) ? rentVal.toFixed(2) + ' %' : '';
         cells[39].style.backgroundColor = (rentVal !== 0) ? getRentColor(rentVal) : '';
 
+        // Кнопка удаления
         const delCell = cells[40];
         delCell.innerHTML = '';
         if (r.link || r.price || r.name) {
@@ -851,7 +739,7 @@
         else tr.classList.remove('row-red');
     }
 
-    // ========== Вспомогательные функции ==========
+    // ========== Вспомогательные функции (без изменений) ==========
     function createEditableNumber(value, onSave, showZero = false) {
         const div = document.createElement('div'); div.className = 'editable-cell';
         const displayVal = (value === 0 && showZero) ? '0' : ((value === 0 || value === null || value === '') ? '' : value);
@@ -895,15 +783,7 @@
 
     function createEditableText(value, onSave) {
         const div = document.createElement('div'); div.className = 'editable-cell';
-        div.style.overflow = 'visible';
-        const span = document.createElement('span');
-        span.textContent = value || '';
-        span.style.overflow = 'hidden';
-        span.style.textOverflow = 'ellipsis';
-        span.style.whiteSpace = 'nowrap';
-        span.style.display = 'block';
-        div.appendChild(span);
-
+        div.textContent = value || '';
         div.addEventListener('click', e => {
             e.stopPropagation(); if (div.querySelector('input')) return;
             const input = document.createElement('input'); input.type = 'text'; input.value = value;
@@ -991,63 +871,6 @@
         }
     }
 
-    // ========== Модальное окно СПП ==========
-    function createSppModal() {
-        const modal = document.createElement('div');
-        modal.id = 'sppModal';
-        modal.style.cssText = 'display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.3); z-index:10000; justify-content:center; align-items:center;';
-        const card = document.createElement('div');
-        card.style.cssText = 'background:#fff; border-radius:12px; padding:24px 28px; min-width:360px; box-shadow:0 8px 24px rgba(0,0,0,0.15); font-family:Inter,system-ui,sans-serif;';
-        card.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <span style="font-size:1.2rem; font-weight:700; color:#34A853;">СПП</span>
-                <button id="sppClose" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#999;">&times;</button>
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px 16px; align-items:center; margin-bottom:20px;">
-                <div style="font-size:0.75rem; color:#888;">Ваша цена</div>
-                <div style="font-size:0.75rem; color:#888;">Цена на Ozon</div>
-                <input type="number" class="spp-left" placeholder="0" style="padding:8px; border:1px solid #ddd; border-radius:6px; font-size:0.9rem; width:100%;">
-                <input type="number" class="spp-right" placeholder="0" style="padding:8px; border:1px solid #ddd; border-radius:6px; font-size:0.9rem; width:100%;">
-                <input type="number" class="spp-left" placeholder="0" style="padding:8px; border:1px solid #ddd; border-radius:6px; font-size:0.9rem; width:100%;">
-                <input type="number" class="spp-right" placeholder="0" style="padding:8px; border:1px solid #ddd; border-radius:6px; font-size:0.9rem; width:100%;">
-                <input type="number" class="spp-left" placeholder="0" style="padding:8px; border:1px solid #ddd; border-radius:6px; font-size:0.9rem; width:100%;">
-                <input type="number" class="spp-right" placeholder="0" style="padding:8px; border:1px solid #ddd; border-radius:6px; font-size:0.9rem; width:100%;">
-            </div>
-            <div id="sppResult" style="font-size:1rem; font-weight:600; color:#333; margin-bottom:16px; text-align:center;"></div>
-            <button id="sppCalculate" style="width:100%; padding:10px; background:#34A853; color:white; border:none; border-radius:8px; font-weight:600; font-size:0.95rem; cursor:pointer;">Рассчитать и применить</button>
-        `;
-        modal.appendChild(card);
-        document.body.appendChild(modal);
-
-        document.getElementById('sppCalculate').addEventListener('click', () => {
-            const lefts = document.querySelectorAll('.spp-left');
-            const rights = document.querySelectorAll('.spp-right');
-            let discounts = [];
-            for (let i = 0; i < lefts.length; i++) {
-                const left = parseFloat(lefts[i].value);
-                const right = parseFloat(rights[i].value);
-                if (!isNaN(left) && left > 0 && !isNaN(right) && right > 0) {
-                    discounts.push(((left - right) / left) * 100);
-                }
-            }
-            if (discounts.length === 0) {
-                globalParams.sppDiscount = 0;
-                document.getElementById('sppResult').textContent = 'Средняя скидка: 0%';
-            } else {
-                const avg = discounts.reduce((a,b) => a+b, 0) / discounts.length;
-                globalParams.sppDiscount = avg;
-                document.getElementById('sppResult').textContent = `Средняя скидка: ${avg.toFixed(1)}%`;
-            }
-            saveToStorage();
-            modal.style.display = 'none';
-        });
-
-        document.getElementById('sppClose').addEventListener('click', () => modal.style.display = 'none');
-        modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
-
-        return modal;
-    }
-
     async function init() {
         loadDbFromStorage();
         const loaded = loadFromStorage();
@@ -1066,11 +889,6 @@
                 if (file) parseExcel(file);
             });
             input.click();
-        });
-
-        const sppModal = createSppModal();
-        document.getElementById('sppBtn').addEventListener('click', () => {
-            sppModal.style.display = 'flex';
         });
     }
 
