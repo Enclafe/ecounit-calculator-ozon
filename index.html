@@ -185,10 +185,11 @@
         .data-table td:not(.link-col):not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:last-child) .editable-cell {
             justify-content: center;
         }
-        /* Прозрачный фон для шапки-1 в закреплённых столбцах */
+/* Шапка-1 в закреплённых столбцах — светло-серая, но под шапкой-2 */
 .param-row th.sticky-left,
 .param-row th.sticky-col {
-    background-color: transparent !important;
+    background-color: #f8f9fa !important;   /* такой же цвет, как у остальной шапки-1 */
+    z-index: 1 !important;                  /* остаётся ниже всех */
 }
     </style>
 </head>
