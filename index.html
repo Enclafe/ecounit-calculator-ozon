@@ -129,23 +129,35 @@
         }
         .delete-btn:hover { opacity: 1; }
 
-        /* === Закрепление столбцов === */
+        /* === Закрепление столбцов слева === */
         .data-table th:first-child,
         .data-table td:first-child {
             position: sticky;
             left: 0;
             z-index: 6;
+        }
+        .data-table td:first-child {
             background-color: #fff !important;
         }
+        .data-table th:first-child {
+            background-color: #f1f3f4;
+        }
+
         .data-table th:nth-child(2),
         .data-table td:nth-child(2) {
             position: sticky;
             left: 72px;
             z-index: 6;
-            background-color: #fff !important;
-            border-right: 2px solid #bbb; /* общая рамка для Фото+Название */
+            border-right: 2px solid #bbb;   /* общая рамка для группы Фото+Название */
         }
-        /* чётные строки — убираем серый фон для закреплённых */
+        .data-table td:nth-child(2) {
+            background-color: #fff !important;
+        }
+        .data-table th:nth-child(2) {
+            background-color: #f1f3f4;
+        }
+
+        /* чётные строки – фон белый */
         .data-table tr:nth-child(even) td:first-child,
         .data-table tr:nth-child(even) td:nth-child(2) {
             background-color: #fff !important;
@@ -154,22 +166,16 @@
         .row-red td:nth-child(2) {
             background-color: #ffcccc !important;
         }
-        .data-table thead th:first-child {
-            background-color: #f1f3f4;
-        }
-        .data-table thead th:nth-child(2) {
-            background-color: #f1f3f4;
-        }
 
-        /* Столбцы справа (маржинальность, рентабельность, удаление) */
+        /* === Закрепление справа (маржинальность, рентабельность, удаление) === */
         .sticky-col {
             position: sticky;
             background-color: inherit;
             z-index: 5;
         }
-        /* Рамка только для Маржинальности (38-й столбец) */
-        .data-table td:nth-child(39),
-        .data-table th:nth-child(39) {
+        /* линия между прокруткой и правой группой – слева от Маржинальности (38-й столбец) */
+        .data-table td:nth-child(38),
+        .data-table th:nth-child(38) {
             border-left: 2px solid #bbb;
         }
         .data-table td:last-child {
@@ -586,7 +592,7 @@
                 th.classList.add('sticky-col');
                 th.setAttribute('data-col-index', i);
             }
-            // Последний столбец (удаление) — кнопка "Очистить всё"
+            // последний столбец – кнопка очистки
             if (i === columns.length - 1) {
                 th.innerHTML = '';
                 th.style.textAlign = 'center';
