@@ -45,71 +45,143 @@
             text-overflow: ellipsis;
             box-sizing: border-box;
         }
-       /* === Базовые стили шапки === */
-.data-table th {
-    background-color: #f1f3f4; font-weight: 600;
-    position: sticky; top: 0; z-index: 20;   /* шапка-2 по умолчанию */
-    border-bottom: 3px solid #ccc;
-    height: 36px;
-    line-height: 36px;
-    text-align: center !important;          /* всё центрируем */
-}
+        /* === Базовые стили шапки === */
+        .data-table th {
+            background-color: #f1f3f4; font-weight: 600;
+            position: sticky; top: 0; z-index: 20;   /* шапка-2 по умолчанию */
+            border-bottom: 3px solid #ccc;
+            height: 36px;
+            line-height: 36px;
+            text-align: center !important;          /* всё центрируем */
+        }
 
-/* Убираем левое выравнивание для отдельных столбцов */
-.data-table th:nth-child(2),
-.data-table th:nth-child(3),
-.data-table th.link-col {
-    text-align: center !important;
-}
-/* данные в этих столбцах оставляем как были (left) */
-.data-table td:nth-child(2),
-.data-table td:nth-child(3),
-.data-table td.link-col {
-    text-align: left !important;
-}
+        /* Убираем левое выравнивание для отдельных столбцов */
+        .data-table th:nth-child(2),
+        .data-table th:nth-child(3),
+        .data-table th.link-col {
+            text-align: center !important;
+        }
+        /* данные в этих столбцах оставляем как были (left) */
+        .data-table td:nth-child(2),
+        .data-table td:nth-child(3),
+        .data-table td.link-col {
+            text-align: left !important;
+        }
 
-/* ===== Шапка-1 (строка параметров) ===== */
-.param-row th {
-    z-index: 1 !important;                   /* ниже всех */
-    background-color: #f8f9fa;
-    font-weight: normal;
-    color: #333;
-}
+        /* ===== Шапка-1 (строка параметров) ===== */
+        .param-row th {
+            z-index: 1 !important;                   /* ниже всех */
+            background-color: #f8f9fa;
+            font-weight: normal;
+            color: #333;
+        }
 
-/* ===== Sticky-столбцы: правые ===== */
-.sticky-col {
-    position: sticky;
-    background-color: inherit;
-}
-.data-table th.sticky-col {
-    z-index: 25 !important;                  /* шапка-2 поверх всего */
-}
-.data-table td.sticky-col {
-    z-index: 10;                             /* данные под шапкой-2 */
-}
-.data-table td:last-child {
-    position: sticky;
-    right: 0;
-    background-color: #fff;
-    z-index: 10;
-}
-.row-red td:last-child {
-    background-color: #ffcccc !important;
-}
+        /* ===== Sticky-столбцы: правые ===== */
+        .sticky-col {
+            position: sticky;
+            background-color: inherit;
+        }
+        .data-table th.sticky-col {
+            z-index: 25 !important;                  /* шапка-2 поверх всего */
+        }
+        .data-table td.sticky-col {
+            z-index: 10;                             /* данные под шапкой-2 */
+        }
+        .data-table td:last-child {
+            position: sticky;
+            right: 0;
+            background-color: #fff;
+            z-index: 10;
+        }
+        .row-red td:last-child {
+            background-color: #ffcccc !important;
+        }
 
-/* ===== Sticky-столбцы: левые ===== */
-.sticky-left {
-    position: sticky;
-    background-color: inherit;
-}
-.data-table th.sticky-left {
-    z-index: 25 !important;                  /* шапка-2 поверх всего */
-}
-.data-table td.sticky-left {
-    z-index: 10;                             /* данные под шапкой-2 */
-}
+        /* ===== Sticky-столбцы: левые ===== */
+        .sticky-left {
+            position: sticky;
+            background-color: inherit;
+        }
+        .data-table th.sticky-left {
+            z-index: 25 !important;                  /* шапка-2 поверх всего */
+        }
+        .data-table td.sticky-left {
+            z-index: 10;                             /* данные под шапкой-2 */
+        }
 
-/* Остальное без изменений */
+        .data-table th:first-child, .data-table td:first-child {
+            width: 72px !important; min-width: 72px !important; max-width: 72px !important;
+            text-align: center;
+            padding: 0;
+        }
+        .data-table td:first-child img {
+            width: 64px; height: 64px;
+            object-fit: cover;
+            display: block; margin: 0 auto;
+            border-radius: 16px;
+        }
+        .data-table th:nth-child(2), .data-table td:nth-child(2) {
+            width: 150px !important; min-width: 150px !important; max-width: 150px !important;
+            text-align: left;
+            font-weight: 600;
+        }
+        .data-table td:nth-child(2) .editable-cell { font-weight: 600; }
+        .data-table th.link-col, .data-table td.link-col {
+            min-width: 60px !important;
+            max-width: 80px !important;
+        }
+        .group-ozon { background-color: #005bff !important; color: white; }
+        .group-1688 { background-color: #ff5b00 !important; color: white; }
+        .group-wb { background-color: #e93acd !important; color: white; }
+
+        .data-table td { vertical-align: middle; line-height: 1.2; }
+        .data-table td .editable-cell,
+        .data-table td .link-cell {
+            display: flex;
+            align-items: center;
+            height: 72px;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            justify-content: inherit;
+        }
+        .data-table td .editable-cell { cursor: pointer; text-align: inherit; }
+        .editable-cell input {
+            width: 100%; height: 100%; border: none; background: transparent;
+            font-family: inherit; font-size: inherit; margin: 0; padding: 0;
+            outline: none; box-sizing: border-box; text-align: inherit; line-height: 1.2;
+        }
+        .link-cell { cursor: pointer; }
+        .link-cell a {
+            display: inline-block; text-decoration: none; color: #005bff;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            max-width: 100%; line-height: 1.2;
+        }
+        .link-cell a:hover { text-decoration: underline; }
+        .link-cell input {
+            width: 100%; height: 100%; border: none; background: transparent;
+            font-family: inherit; font-size: inherit; padding: 0; margin: 0;
+            outline: none; box-sizing: border-box; line-height: 1.2;
+        }
+        .param-input { width: 35px; padding: 2px; border: 1px solid #ccc; border-radius: 3px; font-size: 0.7rem; text-align: center; display: inline-block; vertical-align: middle; }
+        .data-table input[type="number"]::-webkit-inner-spin-button,
+        .data-table input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .data-table input[type="number"] { -moz-appearance: textfield; }
+        .footer {
+            background-color: #f1f3f4; text-align: center; padding: 10px 2rem;
+            font-size: 0.75rem; color: #555; border-top: 1px solid #ddd;
+        }
+
+        .row-red td { background-color: #ffcccc !important; }
+
+        .delete-btn {
+            background: none; border: none; cursor: pointer; font-size: 1.3rem;
+            opacity: 0.7; transition: opacity 0.2s; display: flex;
+            align-items: center; justify-content: center;
+            width: 100%; height: 100%; padding: 0;
+        }
+        .delete-btn:hover { opacity: 1; }
+
         .data-table td:not(.link-col):not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:last-child) .editable-cell {
             justify-content: center;
         }
@@ -141,13 +213,8 @@
         commission1688Percent: 0, brakPercent: 0, reklamaPercent: 0,
         upakovkaRub: 0, procheePercent: 0, nalogPercent: 0,
         sppDiscount: 0,
-        // данные для полей СПП
-        sppPrices: [/* левая1, правая1, левая2, правая2, левая3, правая3 */]
+        sppPrices: ['', '', '', '', '', '']
     };
-    // инициализируем массив при старте
-    if (!globalParams.sppPrices || globalParams.sppPrices.length !== 6) {
-        globalParams.sppPrices = ['', '', '', '', '', ''];
-    }
 
     let rowsData = [];
     const ROWS = 500;
@@ -214,7 +281,6 @@
             const data = JSON.parse(saved);
             if (data.globalParams) {
                 globalParams = { ...globalParams, ...data.globalParams };
-                // гарантируем наличие массива sppPrices
                 if (!globalParams.sppPrices || globalParams.sppPrices.length !== 6) {
                     globalParams.sppPrices = ['', '', '', '', '', ''];
                 }
@@ -481,7 +547,6 @@
             const th = document.createElement('th');
             th.style.backgroundColor = '#f8f9fa';
             if (span > 1) th.colSpan = span;
-            // sticky-классы
             if (i === 0) {
                 th.classList.add('sticky-left');
                 th.style.left = '0px';
@@ -535,7 +600,6 @@
             else if (columns[i].group === 'wb') th.classList.add('group-wb');
             if (i === 3 || i === 17) th.classList.add('link-col');
 
-            // sticky-классы
             if (i === 0) {
                 th.classList.add('sticky-left');
                 th.style.left = '0px';
@@ -547,7 +611,6 @@
                 th.setAttribute('data-col-index', i);
             }
 
-            // последний столбец – кнопка очистки
             if (i === columns.length - 1) {
                 th.innerHTML = '';
                 th.style.textAlign = 'center';
@@ -630,7 +693,6 @@
                 const td = document.createElement('td');
                 if (j === 3 || j === 17) td.classList.add('link-col');
 
-                // sticky-классы
                 if (j === 0) {
                     td.classList.add('sticky-left');
                     td.style.left = '0px';
@@ -941,13 +1003,11 @@
         const leftInputs = modal.querySelectorAll('.spp-left');
         const rightInputs = modal.querySelectorAll('.spp-right');
 
-        // Заполняем поля из сохранённых данных
         for (let i = 0; i < 6; i++) {
             const input = i % 2 === 0 ? leftInputs[i/2] : rightInputs[(i-1)/2];
             if (input) input.value = globalParams.sppPrices[i] || '';
         }
 
-        // Сохраняем поля в globalParams при любом изменении
         const saveFields = () => {
             for (let i = 0; i < 6; i++) {
                 const input = i % 2 === 0 ? leftInputs[i/2] : rightInputs[(i-1)/2];
@@ -975,7 +1035,7 @@
                 globalParams.sppDiscount = avg;
                 document.getElementById('sppResult').textContent = `Средняя скидка: ${avg.toFixed(1)}%`;
             }
-            saveFields();  // на всякий случай
+            saveFields();
             saveToStorage();
             modal.style.display = 'none';
         });
@@ -1016,7 +1076,6 @@
 
         const sppModal = createSppModal();
         document.getElementById('sppBtn').addEventListener('click', () => {
-            // обновляем поля перед показом (на случай если данные менялись извне)
             const lefts = sppModal.querySelectorAll('.spp-left');
             const rights = sppModal.querySelectorAll('.spp-right');
             for (let i = 0; i < 6; i++) {
