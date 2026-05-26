@@ -26,7 +26,9 @@
         .upload-btn {
             background: white; color: #34A853; border: none; padding: 8px 16px; border-radius: 4px;
             font-weight: 600; cursor: pointer; font-size: 0.9rem;
-            text-decoration: none; display: inline-block;
+            font-family: inherit;       /* единый шрифт */
+            text-decoration: none;      /* для ссылки */
+            display: inline-block;
         }
         .upload-btn:hover { background: #e8f5e9; }
         .table-container { flex: 1; overflow: auto; padding: 1rem; }
@@ -130,18 +132,18 @@
         }
         .delete-btn:hover { opacity: 1; }
 
-        /* === Закрепление столбцов СЛЕВА === */
+        /* === Закрепление левых столбцов === */
         .data-table th:first-child,
         .data-table td:first-child {
             position: sticky;
             left: 0;
             z-index: 20;
+            background-color: #fff;
         }
         .data-table th:first-child {
-            top: 0;
+            top: 0 !important;
             background-color: #f1f3f4;
         }
-        .data-table td:first-child { background-color: #fff; }
 
         .data-table th:nth-child(2),
         .data-table td:nth-child(2) {
@@ -149,10 +151,11 @@
             left: 72px;
             z-index: 20;
             background-color: #fff;
-            box-shadow: 2px 0 0 0 #bbb;
+            overflow: visible;               /* чтобы тень была видна */
+            box-shadow: 2px 0 0 0 #bbb;     /* рамка справа */
         }
         .data-table th:nth-child(2) {
-            top: 0;
+            top: 0 !important;
             background-color: #f1f3f4;
         }
 
@@ -165,14 +168,15 @@
             background-color: #ffcccc !important;
         }
 
-        /* === Закрепление столбцов СПРАВА === */
+        /* === Закрепление правых столбцов === */
         .sticky-col {
             position: sticky;
             z-index: 15;
         }
         .data-table td:nth-child(39),
         .data-table th:nth-child(39) {
-            box-shadow: -2px 0 0 0 #bbb;
+            overflow: visible;
+            box-shadow: -2px 0 0 0 #bbb;    /* рамка слева */
         }
         .data-table td:last-child {
             position: sticky;
@@ -184,8 +188,13 @@
             background-color: #ffcccc !important;
         }
 
-        .data-table td:not(.link-col):not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:last-child) .editable-cell {
-            justify-content: center;
+        /* обрезка текста в ячейках с видимым overflow */
+        .data-table td:nth-child(2) .editable-cell span,
+        .data-table td:nth-child(39) span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: block;
         }
     </style>
 </head>
@@ -696,12 +705,12 @@
             cells[0].appendChild(img);
         }
 
+        // Название
         cells[1].innerHTML = '';
         const nameDiv = createEditableText(r.name, (val) => {
             if (val.length) val = val.charAt(0).toUpperCase() + val.slice(1);
             r.name = val; recalcRow(idx); updateRowDisplay(idx); saveToStorage();
         });
-        if (r.name) nameDiv.title = r.name;
         cells[1].appendChild(nameDiv);
 
         cells[2].textContent = r.category || '';
@@ -784,14 +793,31 @@
         cells[36].textContent = (r.price !== 0 && globalParams.nalogPercent !== 0) ? formatPercent(globalParams.nalogPercent) : '';
         cells[37].textContent = formatCurrency(r.netProfit);
 
+        // Маржинальность
         const marginVal = r.margin;
-        cells[38].textContent = (marginVal !== 0) ? marginVal.toFixed(2) + ' %' : '';
+        cells[38].innerHTML = '';   // очистим, потом вставим span
+        const marginSpan = document.createElement('span');
+        marginSpan.textContent = (marginVal !== 0) ? marginVal.toFixed(2) + ' %' : '';
+        marginSpan.style.display = 'block';
+        marginSpan.style.overflow = 'hidden';
+        marginSpan.style.textOverflow = 'ellipsis';
+        marginSpan.style.whiteSpace = 'nowrap';
+        cells[38].appendChild(marginSpan);
         cells[38].style.backgroundColor = (marginVal !== 0) ? getMarginColor(marginVal) : '';
 
+        // Рентабельность
         const rentVal = r.rent;
-        cells[39].textContent = (rentVal !== 0) ? rentVal.toFixed(2) + ' %' : '';
+        cells[39].innerHTML = '';
+        const rentSpan = document.createElement('span');
+        rentSpan.textContent = (rentVal !== 0) ? rentVal.toFixed(2) + ' %' : '';
+        rentSpan.style.display = 'block';
+        rentSpan.style.overflow = 'hidden';
+        rentSpan.style.textOverflow = 'ellipsis';
+        rentSpan.style.whiteSpace = 'nowrap';
+        cells[39].appendChild(rentSpan);
         cells[39].style.backgroundColor = (rentVal !== 0) ? getRentColor(rentVal) : '';
 
+        // Кнопка удаления
         const delCell = cells[40];
         delCell.innerHTML = '';
         if (r.link || r.price || r.name) {
@@ -853,7 +879,16 @@
 
     function createEditableText(value, onSave) {
         const div = document.createElement('div'); div.className = 'editable-cell';
-        div.textContent = value || '';
+        div.style.overflow = 'visible';   // чтобы тень на ячейке была видна
+        const span = document.createElement('span');
+        span.textContent = value || '';
+        span.style.overflow = 'hidden';
+        span.style.textOverflow = 'ellipsis';
+        span.style.whiteSpace = 'nowrap';
+        span.style.display = 'block';
+        span.style.maxWidth = '100%';
+        div.appendChild(span);
+
         div.addEventListener('click', e => {
             e.stopPropagation(); if (div.querySelector('input')) return;
             const input = document.createElement('input'); input.type = 'text'; input.value = value;
