@@ -185,13 +185,14 @@
         .data-table td:not(.link-col):not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:last-child) .editable-cell {
             justify-content: center;
         }
-/* Левая группа */
+/* Левая шапка-1 */
 .param-row th.sticky-left {
     background-color: #f8f9fa !important;
     z-index: 1 !important;
 }
-/* Правая группа */
-.param-row th.sticky-col {
+
+/* Правая шапка-1 – перебиваем z-index обратно */
+.data-table thead .param-row th.sticky-col {
     background-color: #f8f9fa !important;
     z-index: 1 !important;
 }
