@@ -133,16 +133,15 @@
         /* ===== Sticky-столбцы: левые (фото, название) ===== */
         .sticky-left {
             position: sticky;
-            z-index: 20;               /* выше строки параметров и правых столбцов */
+            z-index: 20;
         }
         .data-table th.sticky-left {
-            top: 0;                    /* прилипание к верху */
+            top: 0;
             background-color: #f1f3f4;
         }
         .data-table td.sticky-left {
             background-color: #fff;
         }
-        /* компенсация чётных строк */
         .data-table tr:nth-child(even) td.sticky-left {
             background-color: #fff !important;
         }
@@ -153,7 +152,7 @@
         /* ===== Sticky-столбцы: правые (маржинальность, рентабельность, удаление) ===== */
         .sticky-right {
             position: sticky;
-            z-index: 15;               /* ниже левых, чтобы не перекрывать их */
+            z-index: 20;
         }
         .data-table th.sticky-right {
             top: 0;
@@ -172,20 +171,20 @@
         /* Рамки-разделители (двигаются с ячейками) */
         .data-table td.sticky-left:nth-child(2),
         .data-table th.sticky-left:nth-child(2) {
-            box-shadow: 2px 0 0 0 #bbb;   /* справа от Названия */
+            box-shadow: 2px 0 0 0 #bbb;
         }
         .data-table td.sticky-right:nth-child(39),
         .data-table th.sticky-right:nth-child(39) {
-            box-shadow: -2px 0 0 0 #bbb;  /* слева от Маржинальности */
+            box-shadow: -2px 0 0 0 #bbb;
         }
-
-        /* Убираем обрезку на ячейках с тенями, текст обрезаем внутри span */
+        /* Чтобы тень была видна, убираем обрезку на этих ячейках */
         .data-table td.sticky-left:nth-child(2),
         .data-table td.sticky-right:nth-child(39),
         .data-table td.sticky-right:nth-child(40),
         .data-table td.sticky-right:nth-child(41) {
             overflow: visible;
         }
+        /* Текст внутри обрезаем через span */
         .data-table td.sticky-left:nth-child(2) span,
         .data-table td.sticky-right:nth-child(39) span,
         .data-table td.sticky-right:nth-child(40) span,
@@ -215,7 +214,7 @@
 <div class="footer">© 2026 EGOR SH. Все права защищены.</div>
 
 <script>
-    // ========== Глобальные параметры (без изменений) ==========
+    // ========== Глобальные параметры ==========
     let globalParams = {
         ekvairingPercent: 0, crossDockingPercent: 0, logisticPercent: 5,
         lastMilePercent: 0, returnsPercent: 0, usdRate: 90, usdRateMarkup: 8,
@@ -550,14 +549,14 @@
             const th = document.createElement('th');
             th.style.backgroundColor = '#f8f9fa';
             if (span > 1) th.colSpan = span;
-            // Добавляем sticky-классы в зависимости от индекса
+            // sticky-классы для левых и правых
             if (i === 0) {
                 th.classList.add('sticky-left');
                 th.style.left = '0px';
             } else if (i === 1) {
                 th.classList.add('sticky-left');
                 th.style.left = '72px';
-            } else if (i === 38 || i === 39 || i === 40) { // Маржинальность, Рентабельность, удаление
+            } else if (i >= columns.length - 3) {
                 th.classList.add('sticky-right');
                 th.setAttribute('data-col-index', i);
             }
@@ -615,7 +614,7 @@
                 th.setAttribute('data-col-index', i);
             }
 
-            // кнопка очистки в последнем столбце
+            // последний столбец – кнопка очистки
             if (i === columns.length - 1) {
                 th.innerHTML = '';
                 th.style.textAlign = 'center';
@@ -652,15 +651,14 @@
         measureEl.style.display = 'inline-block';
         document.body.appendChild(measureEl);
 
-        // вычисление ширин
+        // вычисление ширин (упрощённо, без span)
         const rowNamesThs = rowNames.querySelectorAll('th');
         rowNamesThs.forEach((th, idx) => {
-            const start = idx;
-            if (start === 0 || start === 1 || start === 2 || linkIndices.includes(start) || start === columns.length - 1) return;
+            if (idx === 0 || idx === 1 || idx === 2 || linkIndices.includes(idx) || idx === columns.length - 1) return;
             measureEl.textContent = th.textContent;
             const textWidth = measureEl.offsetWidth + 20;
             const totalWidth = Math.max(textWidth, 100);
-            colWidths[start] = totalWidth; // упрощённо, без span
+            colWidths[idx] = totalWidth;
         });
 
         colWidths.forEach((w, idx) => {
