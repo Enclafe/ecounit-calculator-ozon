@@ -133,6 +133,7 @@
         /* === Sticky-столбцы: правые (маржинальность, рентабельность, удаление) === */
         .sticky-col {
             position: sticky;
+            background-color: inherit;
             z-index: 15;
         }
         .data-table th.sticky-col {
@@ -143,15 +144,26 @@
             background-color: #fff;
         }
         .data-table tr:nth-child(even) td.sticky-col {
-            background-color: #f9f9f9;
+            background-color: #fff;   /* белый фон для чётных строк */
         }
         .row-red td.sticky-col {
+            background-color: #ffcccc !important;
+        }
+        /* удаление – всегда белый (как ты просил) */
+        .data-table td:last-child {
+            background-color: #fff !important;
+            position: sticky;
+            right: 0;
+            z-index: 15;
+        }
+        .row-red td:last-child {
             background-color: #ffcccc !important;
         }
 
         /* === Sticky-столбцы: левые (фото, название) === */
         .sticky-left {
             position: sticky;
+            background-color: inherit;
             z-index: 20;               /* выше правых */
         }
         .data-table th.sticky-left {
@@ -162,7 +174,7 @@
             background-color: #fff;
         }
         .data-table tr:nth-child(even) td.sticky-left {
-            background-color: #f9f9f9;
+            background-color: #fff;   /* белый фон для чётных строк */
         }
         .row-red td.sticky-left {
             background-color: #ffcccc !important;
@@ -541,7 +553,7 @@
             const th = document.createElement('th');
             th.style.backgroundColor = '#f8f9fa';
             if (span > 1) th.colSpan = span;
-            // sticky-классы для левых и правых
+            // sticky-классы
             if (i === 0) {
                 th.classList.add('sticky-left');
                 th.style.left = '0px';
