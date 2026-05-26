@@ -45,52 +45,53 @@
             text-overflow: ellipsis;
             box-sizing: border-box;
         }
-        /* === Базовые стили шапки === */
+        /* === НОВАЯ ЧИСТАЯ СИСТЕМА СЛОЁВ === */
+
+        /* Шапка-2 (названия) – всегда сверху */
         .data-table th {
             background-color: #f1f3f4; font-weight: 600;
-            position: sticky; top: 0; z-index: 20;   /* шапка-2 по умолчанию */
+            position: sticky; top: 0; z-index: 25;
             border-bottom: 3px solid #ccc;
             height: 36px;
             line-height: 36px;
-            text-align: center !important;          /* всё центрируем */
-        }
-
-        /* Убираем левое выравнивание для отдельных столбцов */
-        .data-table th:nth-child(2),
-        .data-table th:nth-child(3),
-        .data-table th.link-col {
             text-align: center !important;
         }
-        /* данные в этих столбцах оставляем как были (left) */
-        .data-table td:nth-child(2),
-        .data-table td:nth-child(3),
-        .data-table td.link-col {
-            text-align: left !important;
-        }
 
-        /* ===== Шапка-1 (строка параметров) ===== */
+        /* Шапка-1 (параметры) – всегда снизу */
         .param-row th {
-            z-index: 1 !important;                   /* ниже всех */
+            z-index: 1;
             background-color: #f8f9fa;
             font-weight: normal;
             color: #333;
         }
 
-        /* ===== Sticky-столбцы: правые ===== */
+        /* Ячейки данных */
+        .data-table td {
+            z-index: 10;
+        }
+
+        /* Sticky-столбцы: левые */
+        .sticky-left {
+            position: sticky;
+            background-color: #fff;
+        }
+        .data-table th.sticky-left {
+            z-index: 25;   /* как вся шапка-2 */
+        }
+        .data-table td.sticky-left {
+            z-index: 10;
+        }
+
+        /* Sticky-столбцы: правые */
         .sticky-col {
             position: sticky;
-            background-color: inherit;
+            background-color: #fff;
         }
         .data-table th.sticky-col {
-            z-index: 25 !important;                  /* шапка-2 поверх всего */
-        }
-        /* шапка-1 в правых закреплённых столбцах */
-        .data-table thead .param-row th.sticky-col {
-            z-index: 1 !important;                   /* ниже всех */
-            background-color: #f8f9fa !important;
+            z-index: 25;
         }
         .data-table td.sticky-col {
-            z-index: 10;                             /* данные под шапкой-2 */
+            z-index: 10;
         }
         .data-table td:last-child {
             position: sticky;
@@ -102,23 +103,19 @@
             background-color: #ffcccc !important;
         }
 
-        /* ===== Sticky-столбцы: левые ===== */
-        .sticky-left {
-            position: sticky;
-            background-color: inherit;
+        /* Убираем левое выравнивание заголовков */
+        .data-table th:nth-child(2),
+        .data-table th:nth-child(3),
+        .data-table th.link-col {
+            text-align: center !important;
         }
-        .data-table th.sticky-left {
-            z-index: 25 !important;                  /* шапка-2 поверх всего */
-        }
-        /* шапка-1 в левых закреплённых столбцах */
-        .data-table thead .param-row th.sticky-left {
-            z-index: 1 !important;                   /* ниже всех */
-            background-color: #f8f9fa !important;
-        }
-        .data-table td.sticky-left {
-            z-index: 10;                             /* данные под шапкой-2 */
+        .data-table td:nth-child(2),
+        .data-table td:nth-child(3),
+        .data-table td.link-col {
+            text-align: left !important;
         }
 
+        /* Остальные стили (без изменений) */
         .data-table th:first-child, .data-table td:first-child {
             width: 72px !important; min-width: 72px !important; max-width: 72px !important;
             text-align: center;
