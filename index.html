@@ -18,21 +18,16 @@
             background: white; font-family: 'Inter', system-ui, 'Segoe UI', -apple-system, sans-serif;
             height: 100vh; display: flex; flex-direction: column;
         }
-        .header { background-color: #34A853; padding: 0.8rem 2rem; display: flex; align-items: center; justify-content: flex-start; gap: 12px; }
+        .header { background-color: #34A853; padding: 0.8rem 2rem; display: flex; align-items: center; justify-content: space-between; }
         .header h1 {
             font-family: 'Aerobus', sans-serif;
             font-size: 2.5rem; font-weight: normal; color: white; margin: 0; letter-spacing: 1px;
-            margin-right: auto;
         }
-        .upload-btn, .ozon-calc-btn {
+        .upload-btn {
             background: white; color: #34A853; border: none; padding: 8px 16px; border-radius: 4px;
             font-weight: 600; cursor: pointer; font-size: 0.9rem;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
         }
-        .upload-btn:hover, .ozon-calc-btn:hover { background: #e8f5e9; }
+        .upload-btn:hover { background: #e8f5e9; }
         .table-container { flex: 1; overflow: auto; padding: 1rem; }
         .data-table {
             border-collapse: collapse; table-layout: fixed;
@@ -59,24 +54,6 @@
         .data-table th:nth-child(3), .data-table td:nth-child(3),
         .data-table th.link-col, .data-table td.link-col {
             text-align: left !important;
-        }
-        /* Закреплённые столбцы слева */
-        .data-table th:first-child, .data-table td:first-child {
-            position: sticky;
-            left: 0;
-            z-index: 5;
-            background-color: #fff;
-        }
-        .data-table th:nth-child(2), .data-table td:nth-child(2) {
-            position: sticky;
-            left: 72px; /* ширина первого столбца */
-            z-index: 5;
-            background-color: #fff;
-        }
-        /* Шапка закреплённых столбцов (убираем возможный фон) */
-        .data-table thead th:first-child,
-        .data-table thead th:nth-child(2) {
-            background-color: #f1f3f4;
         }
         .data-table th:first-child, .data-table td:first-child {
             width: 72px !important; min-width: 72px !important; max-width: 72px !important;
@@ -152,20 +129,48 @@
         }
         .delete-btn:hover { opacity: 1; }
 
+        /* === Закрепление столбцов === */
+        .data-table th:first-child,
+        .data-table td:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 6;
+            background-color: #fff;
+        }
+        .data-table th:nth-child(2),
+        .data-table td:nth-child(2) {
+            position: sticky;
+            left: 72px;
+            z-index: 6;
+            background-color: #fff;
+        }
+        .data-table tr:nth-child(even) td:first-child,
+        .data-table tr:nth-child(even) td:nth-child(2) {
+            background-color: #f9f9f9;
+        }
+        .row-red td:first-child,
+        .row-red td:nth-child(2) {
+            background-color: #ffcccc !important;
+        }
+        .data-table thead th:first-child {
+            background-color: #f1f3f4;
+        }
+        .data-table thead th:nth-child(2) {
+            background-color: #f1f3f4;
+        }
+
+        /* Столбцы справа (маржинальность, рентабельность, удаление) */
         .sticky-col {
             position: sticky;
             background-color: inherit;
             z-index: 5;
+            border-left: 2px solid #bbb; /* тонкая рамка для выделения */
         }
-        /* Столбец удаления – всегда белый, непрозрачный */
         .data-table td:last-child {
             position: sticky;
             right: 0;
             background-color: #fff;
             z-index: 5;
-        }
-        .data-table tr:nth-child(even) td:last-child {
-            background-color: #f9f9f9;
         }
         .row-red td:last-child {
             background-color: #ffcccc !important;
@@ -179,8 +184,11 @@
 <body>
 <div class="header">
     <h1>ECOUNIT</h1>
-    <a href="https://calculator.ozon.ru/" target="_blank" class="ozon-calc-btn">OZON калькулятор</a>
-    <button class="upload-btn" id="uploadDbBtn">Загрузить БД</button>
+    <div>
+        <button class="upload-btn" id="ozonCalcBtn" style="margin-right: 8px;">OZON калькулятор</button>
+        <button class="upload-btn" id="sppBtn" style="margin-right: 8px;">СПП</button>
+        <button class="upload-btn" id="uploadDbBtn">Загрузить БД</button>
+    </div>
 </div>
 <div class="table-container">
     <table class="data-table" id="mainTable">
@@ -197,7 +205,8 @@
         lastMilePercent: 0, returnsPercent: 0, usdRate: 90, usdRateMarkup: 8,
         cnyRate: 12.5, cnyRateMarkup: 8, logisticTariff: 1.5,
         commission1688Percent: 0, brakPercent: 0, reklamaPercent: 0,
-        upakovkaRub: 0, procheePercent: 0, nalogPercent: 0
+        upakovkaRub: 0, procheePercent: 0, nalogPercent: 0,
+        sppDiscount: 0
     };
     let rowsData = [];
     const ROWS = 500;
@@ -379,7 +388,16 @@
 
     window.addItemFromExtension = function(item) {
         const cleanPrice = String(item.price || '').replace(/\s/g, '').replace(',', '.');
-        const numericPrice = parseFloat(cleanPrice) || 0;
+        let numericPrice = parseFloat(cleanPrice) || 0;
+
+        // Корректировка цены с учётом средней скидки (СПП)
+        if (globalParams.sppDiscount > 0 && numericPrice > 0) {
+            let corrected = numericPrice / (1 - globalParams.sppDiscount / 100);
+            corrected = Math.round(corrected);
+            if (corrected <= 400) corrected = 300;
+            numericPrice = corrected;
+        }
+
         const emptyRow = rowsData.find(r => !r.link);
         if (!emptyRow) return;
         emptyRow.photo = item.photoUrl || '';
@@ -548,7 +566,6 @@
             else if (columns[i].group === '1688') th.classList.add('group-1688');
             else if (columns[i].group === 'wb') th.classList.add('group-wb');
             if (i === 3 || i === 17) th.classList.add('link-col');
-            // Закреплённые справа
             if (i >= columns.length - 3) {
                 th.classList.add('sticky-col');
                 th.setAttribute('data-col-index', i);
@@ -632,8 +649,8 @@
         for (let i = 0; i < ROWS; i++) updateRowDisplay(i);
     }
 
-    function getMarginColor(v) { return v < 8 ? '#ffcccc' : ''; }
-    function getRentColor(v) { return v < 40 ? '#ffcccc' : ''; }
+    function getMarginColor(v) { return v < 8 ? '#ffcccc' : v <= 15 ? '#fff2cc' : v <= 22 ? '#b7e1cd' : '#8ed6b3'; }
+    function getRentColor(v) { return v < 30 ? '#ffcccc' : v <= 70 ? '#fff2cc' : v <= 100 ? '#b7e1cd' : '#8ed6b3'; }
 
     function updateRowDisplay(idx) {
         const tr = rowsDOM[idx]; if (!tr) return;
@@ -743,6 +760,7 @@
         cells[39].textContent = (rentVal !== 0) ? rentVal.toFixed(2) + ' %' : '';
         cells[39].style.backgroundColor = (rentVal !== 0) ? getRentColor(rentVal) : '';
 
+        // Кнопка удаления
         const delCell = cells[40];
         delCell.innerHTML = '';
         if (r.link || r.price || r.name) {
@@ -760,7 +778,7 @@
         else tr.classList.remove('row-red');
     }
 
-    // ========== Вспомогательные функции (без изменений) ==========
+    // ========== Вспомогательные функции ==========
     function createEditableNumber(value, onSave, showZero = false) {
         const div = document.createElement('div'); div.className = 'editable-cell';
         const displayVal = (value === 0 && showZero) ? '0' : ((value === 0 || value === null || value === '') ? '' : value);
@@ -892,6 +910,56 @@
         }
     }
 
+    // ========== Модальное окно СПП ==========
+    function createSppModal() {
+        const modal = document.createElement('div');
+        modal.id = 'sppModal';
+        modal.style.cssText = 'display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:10000; justify-content:center; align-items:center;';
+        const content = document.createElement('div');
+        content.style.cssText = 'background:white; padding:20px; border-radius:8px; min-width:300px;';
+        content.innerHTML = `
+            <h3>СПП — расчёт средней скидки</h3>
+            <p style="font-size:0.9rem; margin-bottom:10px;">Установленная цена (слева) / Цена на Ozon (справа)</p>
+            <div id="sppInputs">
+                <div class="spp-row"><label>Товар 1</label> <input type="number" class="spp-left" placeholder="Ваша цена"> <input type="number" class="spp-right" placeholder="Цена на Ozon"></div>
+                <div class="spp-row"><label>Товар 2</label> <input type="number" class="spp-left" placeholder="Ваша цена"> <input type="number" class="spp-right" placeholder="Цена на Ozon"></div>
+                <div class="spp-row"><label>Товар 3</label> <input type="number" class="spp-left" placeholder="Ваша цена"> <input type="number" class="spp-right" placeholder="Цена на Ozon"></div>
+            </div>
+            <div id="sppResult" style="margin-top:10px; font-weight:bold;"></div>
+            <button id="sppCalculate">Рассчитать и применить</button>
+        `;
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+
+        document.getElementById('sppCalculate').addEventListener('click', () => {
+            const rows = document.querySelectorAll('#sppInputs .spp-row');
+            let discounts = [];
+            rows.forEach(row => {
+                const left = parseFloat(row.querySelector('.spp-left').value);
+                const right = parseFloat(row.querySelector('.spp-right').value);
+                if (!isNaN(left) && left > 0 && !isNaN(right) && right > 0) {
+                    discounts.push(((left - right) / left) * 100);
+                }
+            });
+            if (discounts.length === 0) {
+                globalParams.sppDiscount = 0;
+                document.getElementById('sppResult').textContent = 'Нет данных. Средняя скидка: 0%';
+            } else {
+                const avg = discounts.reduce((a,b) => a+b, 0) / discounts.length;
+                globalParams.sppDiscount = avg;
+                document.getElementById('sppResult').textContent = `Средняя скидка: ${avg.toFixed(1)}%`;
+            }
+            saveToStorage();
+            modal.style.display = 'none';
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.style.display = 'none';
+        });
+
+        return modal;
+    }
+
     async function init() {
         loadDbFromStorage();
         const loaded = loadFromStorage();
@@ -910,6 +978,15 @@
                 if (file) parseExcel(file);
             });
             input.click();
+        });
+
+        document.getElementById('ozonCalcBtn').addEventListener('click', () => {
+            window.open('https://calculator.ozon.ru/', '_blank');
+        });
+
+        const sppModal = createSppModal();
+        document.getElementById('sppBtn').addEventListener('click', () => {
+            sppModal.style.display = 'flex';
         });
     }
 
