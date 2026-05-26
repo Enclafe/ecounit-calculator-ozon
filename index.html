@@ -152,7 +152,7 @@
         /* ===== Sticky-столбцы: правые (маржинальность, рентабельность, удаление) ===== */
         .sticky-right {
             position: sticky;
-            z-index: 20;
+            z-index: 15;
         }
         .data-table th.sticky-right {
             top: 0;
@@ -168,14 +168,14 @@
             background-color: #ffcccc !important;
         }
 
-        /* Рамки-разделители (двигаются с ячейками) */
+        /* Рамки-разделители через тень (двигаются с ячейками) */
         .data-table td.sticky-left:nth-child(2),
         .data-table th.sticky-left:nth-child(2) {
-            box-shadow: 2px 0 0 0 #bbb;
+            box-shadow: 2px 0 0 0 #bbb;   /* справа от Названия */
         }
         .data-table td.sticky-right:nth-child(39),
         .data-table th.sticky-right:nth-child(39) {
-            box-shadow: -2px 0 0 0 #bbb;
+            box-shadow: -2px 0 0 0 #bbb;  /* слева от Маржинальности */
         }
         /* Чтобы тень была видна, убираем обрезку на этих ячейках */
         .data-table td.sticky-left:nth-child(2),
@@ -589,6 +589,7 @@
         thead.appendChild(rowParams);
 
         const rowNames = document.createElement('tr');
+        const titleCells = [];
         i = 0;
         while (i < columns.length) {
             const currentMain = columns[i].mainTitle;
@@ -629,6 +630,7 @@
                 });
                 th.appendChild(clearBtn);
             }
+            titleCells.push({th, start: i, end: i + span - 1, span});
             rowNames.appendChild(th);
             i = j;
         }
@@ -651,14 +653,13 @@
         measureEl.style.display = 'inline-block';
         document.body.appendChild(measureEl);
 
-        // вычисление ширин (упрощённо, без span)
-        const rowNamesThs = rowNames.querySelectorAll('th');
-        rowNamesThs.forEach((th, idx) => {
-            if (idx === 0 || idx === 1 || idx === 2 || linkIndices.includes(idx) || idx === columns.length - 1) return;
+        titleCells.forEach(({th, start, end, span}) => {
+            if (start === 0 || start === 1 || start === 2 || linkIndices.includes(start) || start === columns.length - 1) return;
             measureEl.textContent = th.textContent;
             const textWidth = measureEl.offsetWidth + 20;
             const totalWidth = Math.max(textWidth, 100);
-            colWidths[idx] = totalWidth;
+            const perCol = Math.ceil(totalWidth / span);
+            for (let k = start; k <= end; k++) colWidths[k] = perCol;
         });
 
         colWidths.forEach((w, idx) => {
