@@ -18,21 +18,16 @@
             background: white; font-family: 'Inter', system-ui, 'Segoe UI', -apple-system, sans-serif;
             height: 100vh; display: flex; flex-direction: column;
         }
-        .header { background-color: #34A853; padding: 0.8rem 2rem; display: flex; align-items: center; justify-content: flex-start; gap: 12px; }
+        .header { background-color: #34A853; padding: 0.8rem 2rem; display: flex; align-items: center; justify-content: space-between; }
         .header h1 {
             font-family: 'Aerobus', sans-serif;
             font-size: 2.5rem; font-weight: normal; color: white; margin: 0; letter-spacing: 1px;
-            margin-right: auto;
         }
-        .upload-btn, .ozon-calc-btn {
+        .upload-btn {
             background: white; color: #34A853; border: none; padding: 8px 16px; border-radius: 4px;
             font-weight: 600; cursor: pointer; font-size: 0.9rem;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
         }
-        .upload-btn:hover, .ozon-calc-btn:hover { background: #e8f5e9; }
+        .upload-btn:hover { background: #e8f5e9; }
         .table-container { flex: 1; overflow: auto; padding: 1rem; }
         .data-table {
             border-collapse: collapse; table-layout: fixed;
@@ -59,24 +54,6 @@
         .data-table th:nth-child(3), .data-table td:nth-child(3),
         .data-table th.link-col, .data-table td.link-col {
             text-align: left !important;
-        }
-        /* Закреплённые столбцы слева */
-        .data-table th:first-child, .data-table td:first-child {
-            position: sticky;
-            left: 0;
-            z-index: 5;
-            background-color: #fff;
-        }
-        .data-table th:nth-child(2), .data-table td:nth-child(2) {
-            position: sticky;
-            left: 72px; /* ширина первого столбца */
-            z-index: 5;
-            background-color: #fff;
-        }
-        /* Шапка закреплённых столбцов (убираем возможный фон) */
-        .data-table thead th:first-child,
-        .data-table thead th:nth-child(2) {
-            background-color: #f1f3f4;
         }
         .data-table th:first-child, .data-table td:first-child {
             width: 72px !important; min-width: 72px !important; max-width: 72px !important;
@@ -152,21 +129,56 @@
         }
         .delete-btn:hover { opacity: 1; }
 
+        /* === Закрепление столбцов === */
+        /* Фото и Название — слева */
+        .data-table th:first-child,
+        .data-table td:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 6;
+            background-color: #fff;
+        }
+        .data-table th:nth-child(2),
+        .data-table td:nth-child(2) {
+            position: sticky;
+            left: 72px; /* ширина первой колонки */
+            z-index: 6;
+            background-color: #fff;
+        }
+        /* Фон чётных строк для этих sticky ячеек */
+        .data-table tr:nth-child(even) td:first-child,
+        .data-table tr:nth-child(even) td:nth-child(2) {
+            background-color: #f9f9f9;
+        }
+        /* Красные строки */
+        .row-red td:first-child,
+        .row-red td:nth-child(2) {
+            background-color: #ffcccc !important;
+        }
+        /* Заголовки первых двух столбцов (шапка) */
+        .data-table thead th:first-child {
+            background-color: #f1f3f4;
+        }
+        .data-table thead th:nth-child(2) {
+            background-color: #f1f3f4;
+        }
+
+        /* Столбцы справа (маржинальность, рентабельность, удаление) */
         .sticky-col {
             position: sticky;
             background-color: inherit;
             z-index: 5;
         }
-        /* Столбец удаления – всегда белый, непрозрачный */
+        /* Удаление — всегда белый фон */
         .data-table td:last-child {
             position: sticky;
             right: 0;
             background-color: #fff;
             z-index: 5;
         }
-        .data-table tr:nth-child(even) td:last-child {
-            background-color: #f9f9f9;
-        }
+        /* Убираем старое правило, которое делало удаление серым */
+        /* .data-table tr:nth-child(even) td:last-child { background-color: #f9f9f9; } — удалено */
+
         .row-red td:last-child {
             background-color: #ffcccc !important;
         }
@@ -179,8 +191,10 @@
 <body>
 <div class="header">
     <h1>ECOUNIT</h1>
-    <a href="https://calculator.ozon.ru/" target="_blank" class="ozon-calc-btn">OZON калькулятор</a>
-    <button class="upload-btn" id="uploadDbBtn">Загрузить БД</button>
+    <div>
+        <button class="upload-btn" id="ozonCalcBtn" style="margin-right: 8px;">OZON калькулятор</button>
+        <button class="upload-btn" id="uploadDbBtn">Загрузить БД</button>
+    </div>
 </div>
 <div class="table-container">
     <table class="data-table" id="mainTable">
@@ -632,8 +646,8 @@
         for (let i = 0; i < ROWS; i++) updateRowDisplay(i);
     }
 
-    function getMarginColor(v) { return v < 8 ? '#ffcccc' : ''; }
-    function getRentColor(v) { return v < 40 ? '#ffcccc' : ''; }
+    function getMarginColor(v) { return v < 8 ? '#ffcccc' : v <= 15 ? '#fff2cc' : v <= 22 ? '#b7e1cd' : '#8ed6b3'; }
+    function getRentColor(v) { return v < 40 ? '#ffcccc' : v <= 70 ? '#fff2cc' : v <= 100 ? '#b7e1cd' : '#8ed6b3'; }
 
     function updateRowDisplay(idx) {
         const tr = rowsDOM[idx]; if (!tr) return;
@@ -743,6 +757,7 @@
         cells[39].textContent = (rentVal !== 0) ? rentVal.toFixed(2) + ' %' : '';
         cells[39].style.backgroundColor = (rentVal !== 0) ? getRentColor(rentVal) : '';
 
+        // Кнопка удаления
         const delCell = cells[40];
         delCell.innerHTML = '';
         if (r.link || r.price || r.name) {
@@ -910,6 +925,10 @@
                 if (file) parseExcel(file);
             });
             input.click();
+        });
+
+        document.getElementById('ozonCalcBtn').addEventListener('click', () => {
+            window.open('https://calculator.ozon.ru/', '_blank');
         });
     }
 
