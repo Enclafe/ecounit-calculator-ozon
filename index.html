@@ -136,6 +136,7 @@
             left: 0;
             z-index: 6;
             background-color: #fff;
+            border-right: 2px solid #bbb;
         }
         .data-table th:nth-child(2),
         .data-table td:nth-child(2) {
@@ -143,6 +144,7 @@
             left: 72px;
             z-index: 6;
             background-color: #fff;
+            border-right: 2px solid #bbb;
         }
         .data-table tr:nth-child(even) td:first-child,
         .data-table tr:nth-child(even) td:nth-child(2) {
@@ -164,7 +166,7 @@
             position: sticky;
             background-color: inherit;
             z-index: 5;
-            border-left: 2px solid #bbb; /* тонкая рамка для выделения */
+            border-left: 2px solid #bbb;
         }
         .data-table td:last-child {
             position: sticky;
@@ -394,7 +396,7 @@
         if (globalParams.sppDiscount > 0 && numericPrice > 0) {
             let corrected = numericPrice / (1 - globalParams.sppDiscount / 100);
             corrected = Math.round(corrected);
-            if (corrected <= 400) corrected = 300;
+            if (corrected >= 300 && corrected <= 400) corrected = 300;
             numericPrice = corrected;
         }
 
@@ -914,36 +916,44 @@
     function createSppModal() {
         const modal = document.createElement('div');
         modal.id = 'sppModal';
-        modal.style.cssText = 'display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:10000; justify-content:center; align-items:center;';
-        const content = document.createElement('div');
-        content.style.cssText = 'background:white; padding:20px; border-radius:8px; min-width:300px;';
-        content.innerHTML = `
-            <h3>СПП — расчёт средней скидки</h3>
-            <p style="font-size:0.9rem; margin-bottom:10px;">Установленная цена (слева) / Цена на Ozon (справа)</p>
-            <div id="sppInputs">
-                <div class="spp-row"><label>Товар 1</label> <input type="number" class="spp-left" placeholder="Ваша цена"> <input type="number" class="spp-right" placeholder="Цена на Ozon"></div>
-                <div class="spp-row"><label>Товар 2</label> <input type="number" class="spp-left" placeholder="Ваша цена"> <input type="number" class="spp-right" placeholder="Цена на Ozon"></div>
-                <div class="spp-row"><label>Товар 3</label> <input type="number" class="spp-left" placeholder="Ваша цена"> <input type="number" class="spp-right" placeholder="Цена на Ozon"></div>
+        modal.style.cssText = 'display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.3); z-index:10000; justify-content:center; align-items:center;';
+        const card = document.createElement('div');
+        card.style.cssText = 'background:#fff; border-radius:12px; padding:24px 28px; min-width:360px; box-shadow:0 8px 24px rgba(0,0,0,0.15); font-family:Inter,system-ui,sans-serif;';
+        card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <span style="font-size:1.2rem; font-weight:600; color:#34A853;">СПП</span>
+                <button id="sppClose" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#999;">&times;</button>
             </div>
-            <div id="sppResult" style="margin-top:10px; font-weight:bold;"></div>
-            <button id="sppCalculate">Рассчитать и применить</button>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px 16px; align-items:center; margin-bottom:20px;">
+                <div style="font-size:0.75rem; color:#888;">Ваша цена</div>
+                <div style="font-size:0.75rem; color:#888;">Цена на Ozon</div>
+                <input type="number" class="spp-left" placeholder="0" style="padding:8px; border:1px solid #ddd; border-radius:6px; font-size:0.9rem; width:100%;">
+                <input type="number" class="spp-right" placeholder="0" style="padding:8px; border:1px solid #ddd; border-radius:6px; font-size:0.9rem; width:100%;">
+                <input type="number" class="spp-left" placeholder="0" style="padding:8px; border:1px solid #ddd; border-radius:6px; font-size:0.9rem; width:100%;">
+                <input type="number" class="spp-right" placeholder="0" style="padding:8px; border:1px solid #ddd; border-radius:6px; font-size:0.9rem; width:100%;">
+                <input type="number" class="spp-left" placeholder="0" style="padding:8px; border:1px solid #ddd; border-radius:6px; font-size:0.9rem; width:100%;">
+                <input type="number" class="spp-right" placeholder="0" style="padding:8px; border:1px solid #ddd; border-radius:6px; font-size:0.9rem; width:100%;">
+            </div>
+            <div id="sppResult" style="font-size:1rem; font-weight:600; color:#333; margin-bottom:16px; text-align:center;"></div>
+            <button id="sppCalculate" style="width:100%; padding:10px; background:#34A853; color:white; border:none; border-radius:8px; font-weight:600; font-size:0.95rem; cursor:pointer;">Рассчитать и применить</button>
         `;
-        modal.appendChild(content);
+        modal.appendChild(card);
         document.body.appendChild(modal);
 
         document.getElementById('sppCalculate').addEventListener('click', () => {
-            const rows = document.querySelectorAll('#sppInputs .spp-row');
+            const lefts = document.querySelectorAll('.spp-left');
+            const rights = document.querySelectorAll('.spp-right');
             let discounts = [];
-            rows.forEach(row => {
-                const left = parseFloat(row.querySelector('.spp-left').value);
-                const right = parseFloat(row.querySelector('.spp-right').value);
+            for (let i = 0; i < lefts.length; i++) {
+                const left = parseFloat(lefts[i].value);
+                const right = parseFloat(rights[i].value);
                 if (!isNaN(left) && left > 0 && !isNaN(right) && right > 0) {
                     discounts.push(((left - right) / left) * 100);
                 }
-            });
+            }
             if (discounts.length === 0) {
                 globalParams.sppDiscount = 0;
-                document.getElementById('sppResult').textContent = 'Нет данных. Средняя скидка: 0%';
+                document.getElementById('sppResult').textContent = 'Средняя скидка: 0%';
             } else {
                 const avg = discounts.reduce((a,b) => a+b, 0) / discounts.length;
                 globalParams.sppDiscount = avg;
@@ -953,9 +963,8 @@
             modal.style.display = 'none';
         });
 
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) modal.style.display = 'none';
-        });
+        document.getElementById('sppClose').addEventListener('click', () => modal.style.display = 'none');
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
 
         return modal;
     }
