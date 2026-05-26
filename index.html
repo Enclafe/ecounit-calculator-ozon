@@ -185,16 +185,12 @@
         .data-table td:not(.link-col):not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:last-child) .editable-cell {
             justify-content: center;
         }
-/* Левая шапка-1 */
-.param-row th.sticky-left {
-    background-color: #f8f9fa !important;
-    z-index: 1 !important;
-}
-
-/* Правая шапка-1 – окончательное решение */
+/* Шапка‑1 (строка параметров) – закреплённые столбцы (левые и правые)
+   Одинаковый светло‑серый фон и самый низкий z‑index */
+.data-table thead .param-row th.sticky-left,
 .data-table thead .param-row th.sticky-col {
-    z-index: 1 !important;
     background-color: #f8f9fa !important;
+    z-index: 1 !important;
 }
     </style>
 </head>
