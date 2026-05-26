@@ -47,10 +47,20 @@
         }
         .data-table th {
             background-color: #f1f3f4; font-weight: 600;
-            position: sticky; top: 0; z-index: 10; border-bottom: 3px solid #ccc;
+            position: sticky; top: 0; z-index: 20;   /* шапка‑2 поверх всего */
+            border-bottom: 3px solid #ccc;
             height: 36px;
             line-height: 36px;
+            text-align: center !important;          /* принудительное центрирование */
         }
+        /* шапка‑1 (строка параметров) */
+        .param-row th {
+            z-index: 5 !important;                   /* ниже всех */
+            background-color: #f8f9fa;
+            font-weight: normal;
+            color: #333;
+        }
+        /* отступ для некоторых столбцов (чтобы данные не прилипали вплотную) */
         .data-table th:nth-child(2), .data-table td:nth-child(2),
         .data-table th:nth-child(3), .data-table td:nth-child(3),
         .data-table th.link-col, .data-table td.link-col {
@@ -80,7 +90,6 @@
         .group-ozon { background-color: #005bff !important; color: white; }
         .group-1688 { background-color: #ff5b00 !important; color: white; }
         .group-wb { background-color: #e93acd !important; color: white; }
-        .param-row th { background-color: #f8f9fa; font-weight: normal; color: #333; }
 
         .data-table td { vertical-align: middle; line-height: 1.2; }
         .data-table td .editable-cell,
@@ -130,28 +139,27 @@
         }
         .delete-btn:hover { opacity: 1; }
 
-        /* === Sticky-столбцы: правые (маржинальность, рентабельность, удаление) === */
+        /* === Sticky‑столбцы: правые === */
         .sticky-col {
             position: sticky;
             background-color: inherit;
-            z-index: 5;
+            z-index: 10;                 /* между обычными ячейками и шапкой‑2 */
         }
-        /* Удаление — всегда белый */
         .data-table td:last-child {
             position: sticky;
             right: 0;
             background-color: #fff;
-            z-index: 5;
+            z-index: 10;
         }
         .row-red td:last-child {
             background-color: #ffcccc !important;
         }
 
-        /* === Sticky-столбцы: левые (фото, название) === */
+        /* === Sticky‑столбцы: левые === */
         .sticky-left {
             position: sticky;
             background-color: inherit;
-            z-index: 5;
+            z-index: 10;
         }
 
         .data-table td:not(.link-col):not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:last-child) .editable-cell {
@@ -184,8 +192,15 @@
         cnyRate: 12.5, cnyRateMarkup: 8, logisticTariff: 1.5,
         commission1688Percent: 0, brakPercent: 0, reklamaPercent: 0,
         upakovkaRub: 0, procheePercent: 0, nalogPercent: 0,
-        sppDiscount: 0
+        sppDiscount: 0,
+        // данные для полей СПП
+        sppPrices: [/* левая1, правая1, левая2, правая2, левая3, правая3 */]
     };
+    // инициализируем массив при старте
+    if (!globalParams.sppPrices || globalParams.sppPrices.length !== 6) {
+        globalParams.sppPrices = ['', '', '', '', '', ''];
+    }
+
     let rowsData = [];
     const ROWS = 500;
     const STORAGE_KEY = 'ecounit_data';
@@ -249,7 +264,13 @@
         if (!saved) return false;
         try {
             const data = JSON.parse(saved);
-            if (data.globalParams) globalParams = { ...globalParams, ...data.globalParams };
+            if (data.globalParams) {
+                globalParams = { ...globalParams, ...data.globalParams };
+                // гарантируем наличие массива sppPrices
+                if (!globalParams.sppPrices || globalParams.sppPrices.length !== 6) {
+                    globalParams.sppPrices = ['', '', '', '', '', ''];
+                }
+            }
             if (data.rows && Array.isArray(data.rows)) {
                 initRows();
                 data.rows.forEach((savedRow, idx) => {
@@ -941,7 +962,7 @@
         }
     }
 
-    // ========== Модальное окно СПП ==========
+    // ========== Модальное окно СПП (с сохранением полей) ==========
     function createSppModal() {
         const modal = document.createElement('div');
         modal.id = 'sppModal';
@@ -969,13 +990,31 @@
         modal.appendChild(card);
         document.body.appendChild(modal);
 
+        const leftInputs = modal.querySelectorAll('.spp-left');
+        const rightInputs = modal.querySelectorAll('.spp-right');
+
+        // Заполняем поля из сохранённых данных
+        for (let i = 0; i < 6; i++) {
+            const input = i % 2 === 0 ? leftInputs[i/2] : rightInputs[(i-1)/2];
+            if (input) input.value = globalParams.sppPrices[i] || '';
+        }
+
+        // Сохраняем поля в globalParams при любом изменении
+        const saveFields = () => {
+            for (let i = 0; i < 6; i++) {
+                const input = i % 2 === 0 ? leftInputs[i/2] : rightInputs[(i-1)/2];
+                globalParams.sppPrices[i] = input ? input.value : '';
+            }
+            saveToStorage();
+        };
+        leftInputs.forEach(inp => inp.addEventListener('input', saveFields));
+        rightInputs.forEach(inp => inp.addEventListener('input', saveFields));
+
         document.getElementById('sppCalculate').addEventListener('click', () => {
-            const lefts = document.querySelectorAll('.spp-left');
-            const rights = document.querySelectorAll('.spp-right');
-            let discounts = [];
-            for (let i = 0; i < lefts.length; i++) {
-                const left = parseFloat(lefts[i].value);
-                const right = parseFloat(rights[i].value);
+            const discounts = [];
+            for (let i = 0; i < leftInputs.length; i++) {
+                const left = parseFloat(leftInputs[i].value);
+                const right = parseFloat(rightInputs[i].value);
                 if (!isNaN(left) && left > 0 && !isNaN(right) && right > 0) {
                     discounts.push(((left - right) / left) * 100);
                 }
@@ -988,12 +1027,21 @@
                 globalParams.sppDiscount = avg;
                 document.getElementById('sppResult').textContent = `Средняя скидка: ${avg.toFixed(1)}%`;
             }
+            saveFields();  // на всякий случай
             saveToStorage();
             modal.style.display = 'none';
         });
 
-        document.getElementById('sppClose').addEventListener('click', () => modal.style.display = 'none');
-        modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
+        document.getElementById('sppClose').addEventListener('click', () => {
+            saveFields();
+            modal.style.display = 'none';
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                saveFields();
+                modal.style.display = 'none';
+            }
+        });
 
         return modal;
     }
@@ -1020,6 +1068,13 @@
 
         const sppModal = createSppModal();
         document.getElementById('sppBtn').addEventListener('click', () => {
+            // обновляем поля перед показом (на случай если данные менялись извне)
+            const lefts = sppModal.querySelectorAll('.spp-left');
+            const rights = sppModal.querySelectorAll('.spp-right');
+            for (let i = 0; i < 6; i++) {
+                const input = i % 2 === 0 ? lefts[i/2] : rights[(i-1)/2];
+                if (input) input.value = globalParams.sppPrices[i] || '';
+            }
             sppModal.style.display = 'flex';
         });
     }
