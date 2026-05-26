@@ -45,123 +45,71 @@
             text-overflow: ellipsis;
             box-sizing: border-box;
         }
-        .data-table th {
-            background-color: #f1f3f4; font-weight: 600;
-            position: sticky; top: 0; z-index: 20;   /* шапка‑2 поверх всего */
-            border-bottom: 3px solid #ccc;
-            height: 36px;
-            line-height: 36px;
-            text-align: center !important;          /* принудительное центрирование */
-        }
-        /* шапка‑1 (строка параметров) */
-        .param-row th {
-            z-index: 5 !important;                   /* ниже всех */
-            background-color: #f8f9fa;
-            font-weight: normal;
-            color: #333;
-        }
-        /* отступ для некоторых столбцов (чтобы данные не прилипали вплотную) */
-        .data-table th:nth-child(2), .data-table td:nth-child(2),
-        .data-table th:nth-child(3), .data-table td:nth-child(3),
-        .data-table th.link-col, .data-table td.link-col {
-            text-align: left !important;
-        }
-        .data-table th:first-child, .data-table td:first-child {
-            width: 72px !important; min-width: 72px !important; max-width: 72px !important;
-            text-align: center;
-            padding: 0;
-        }
-        .data-table td:first-child img {
-            width: 64px; height: 64px;
-            object-fit: cover;
-            display: block; margin: 0 auto;
-            border-radius: 16px;
-        }
-        .data-table th:nth-child(2), .data-table td:nth-child(2) {
-            width: 150px !important; min-width: 150px !important; max-width: 150px !important;
-            text-align: left;
-            font-weight: 600;
-        }
-        .data-table td:nth-child(2) .editable-cell { font-weight: 600; }
-        .data-table th.link-col, .data-table td.link-col {
-            min-width: 60px !important;
-            max-width: 80px !important;
-        }
-        .group-ozon { background-color: #005bff !important; color: white; }
-        .group-1688 { background-color: #ff5b00 !important; color: white; }
-        .group-wb { background-color: #e93acd !important; color: white; }
+       /* === Базовые стили шапки === */
+.data-table th {
+    background-color: #f1f3f4; font-weight: 600;
+    position: sticky; top: 0; z-index: 20;   /* шапка-2 по умолчанию */
+    border-bottom: 3px solid #ccc;
+    height: 36px;
+    line-height: 36px;
+    text-align: center !important;          /* всё центрируем */
+}
 
-        .data-table td { vertical-align: middle; line-height: 1.2; }
-        .data-table td .editable-cell,
-        .data-table td .link-cell {
-            display: flex;
-            align-items: center;
-            height: 72px;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-            justify-content: inherit;
-        }
-        .data-table td .editable-cell { cursor: pointer; text-align: inherit; }
-        .editable-cell input {
-            width: 100%; height: 100%; border: none; background: transparent;
-            font-family: inherit; font-size: inherit; margin: 0; padding: 0;
-            outline: none; box-sizing: border-box; text-align: inherit; line-height: 1.2;
-        }
-        .link-cell { cursor: pointer; }
-        .link-cell a {
-            display: inline-block; text-decoration: none; color: #005bff;
-            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-            max-width: 100%; line-height: 1.2;
-        }
-        .link-cell a:hover { text-decoration: underline; }
-        .link-cell input {
-            width: 100%; height: 100%; border: none; background: transparent;
-            font-family: inherit; font-size: inherit; padding: 0; margin: 0;
-            outline: none; box-sizing: border-box; line-height: 1.2;
-        }
-        .param-input { width: 35px; padding: 2px; border: 1px solid #ccc; border-radius: 3px; font-size: 0.7rem; text-align: center; display: inline-block; vertical-align: middle; }
-        .data-table input[type="number"]::-webkit-inner-spin-button,
-        .data-table input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        .data-table input[type="number"] { -moz-appearance: textfield; }
-        .footer {
-            background-color: #f1f3f4; text-align: center; padding: 10px 2rem;
-            font-size: 0.75rem; color: #555; border-top: 1px solid #ddd;
-        }
+/* Убираем левое выравнивание для отдельных столбцов */
+.data-table th:nth-child(2),
+.data-table th:nth-child(3),
+.data-table th.link-col {
+    text-align: center !important;
+}
+/* данные в этих столбцах оставляем как были (left) */
+.data-table td:nth-child(2),
+.data-table td:nth-child(3),
+.data-table td.link-col {
+    text-align: left !important;
+}
 
-        .row-red td { background-color: #ffcccc !important; }
+/* ===== Шапка-1 (строка параметров) ===== */
+.param-row th {
+    z-index: 1 !important;                   /* ниже всех */
+    background-color: #f8f9fa;
+    font-weight: normal;
+    color: #333;
+}
 
-        .delete-btn {
-            background: none; border: none; cursor: pointer; font-size: 1.3rem;
-            opacity: 0.7; transition: opacity 0.2s; display: flex;
-            align-items: center; justify-content: center;
-            width: 100%; height: 100%; padding: 0;
-        }
-        .delete-btn:hover { opacity: 1; }
+/* ===== Sticky-столбцы: правые ===== */
+.sticky-col {
+    position: sticky;
+    background-color: inherit;
+}
+.data-table th.sticky-col {
+    z-index: 25 !important;                  /* шапка-2 поверх всего */
+}
+.data-table td.sticky-col {
+    z-index: 10;                             /* данные под шапкой-2 */
+}
+.data-table td:last-child {
+    position: sticky;
+    right: 0;
+    background-color: #fff;
+    z-index: 10;
+}
+.row-red td:last-child {
+    background-color: #ffcccc !important;
+}
 
-        /* === Sticky‑столбцы: правые === */
-        .sticky-col {
-            position: sticky;
-            background-color: inherit;
-            z-index: 10;                 /* между обычными ячейками и шапкой‑2 */
-        }
-        .data-table td:last-child {
-            position: sticky;
-            right: 0;
-            background-color: #fff;
-            z-index: 10;
-        }
-        .row-red td:last-child {
-            background-color: #ffcccc !important;
-        }
+/* ===== Sticky-столбцы: левые ===== */
+.sticky-left {
+    position: sticky;
+    background-color: inherit;
+}
+.data-table th.sticky-left {
+    z-index: 25 !important;                  /* шапка-2 поверх всего */
+}
+.data-table td.sticky-left {
+    z-index: 10;                             /* данные под шапкой-2 */
+}
 
-        /* === Sticky‑столбцы: левые === */
-        .sticky-left {
-            position: sticky;
-            background-color: inherit;
-            z-index: 10;
-        }
-
+/* Остальное без изменений */
         .data-table td:not(.link-col):not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:last-child) .editable-cell {
             justify-content: center;
         }
