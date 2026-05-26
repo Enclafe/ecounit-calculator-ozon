@@ -18,16 +18,21 @@
             background: white; font-family: 'Inter', system-ui, 'Segoe UI', -apple-system, sans-serif;
             height: 100vh; display: flex; flex-direction: column;
         }
-        .header { background-color: #34A853; padding: 0.8rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+        .header { background-color: #34A853; padding: 0.8rem 2rem; display: flex; align-items: center; justify-content: flex-start; gap: 12px; }
         .header h1 {
             font-family: 'Aerobus', sans-serif;
             font-size: 2.5rem; font-weight: normal; color: white; margin: 0; letter-spacing: 1px;
+            margin-right: auto;
         }
-        .upload-btn {
+        .upload-btn, .ozon-calc-btn {
             background: white; color: #34A853; border: none; padding: 8px 16px; border-radius: 4px;
             font-weight: 600; cursor: pointer; font-size: 0.9rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
-        .upload-btn:hover { background: #e8f5e9; }
+        .upload-btn:hover, .ozon-calc-btn:hover { background: #e8f5e9; }
         .table-container { flex: 1; overflow: auto; padding: 1rem; }
         .data-table {
             border-collapse: collapse; table-layout: fixed;
@@ -54,6 +59,24 @@
         .data-table th:nth-child(3), .data-table td:nth-child(3),
         .data-table th.link-col, .data-table td.link-col {
             text-align: left !important;
+        }
+        /* Закреплённые столбцы слева */
+        .data-table th:first-child, .data-table td:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 5;
+            background-color: #fff;
+        }
+        .data-table th:nth-child(2), .data-table td:nth-child(2) {
+            position: sticky;
+            left: 72px; /* ширина первого столбца */
+            z-index: 5;
+            background-color: #fff;
+        }
+        /* Шапка закреплённых столбцов (убираем возможный фон) */
+        .data-table thead th:first-child,
+        .data-table thead th:nth-child(2) {
+            background-color: #f1f3f4;
         }
         .data-table th:first-child, .data-table td:first-child {
             width: 72px !important; min-width: 72px !important; max-width: 72px !important;
@@ -134,7 +157,7 @@
             background-color: inherit;
             z-index: 5;
         }
-        /* Столбец удаления – непрозрачный фон */
+        /* Столбец удаления – всегда белый, непрозрачный */
         .data-table td:last-child {
             position: sticky;
             right: 0;
@@ -156,6 +179,7 @@
 <body>
 <div class="header">
     <h1>ECOUNIT</h1>
+    <a href="https://calculator.ozon.ru/" target="_blank" class="ozon-calc-btn">OZON калькулятор</a>
     <button class="upload-btn" id="uploadDbBtn">Загрузить БД</button>
 </div>
 <div class="table-container">
@@ -279,7 +303,6 @@
     function formatPercent(v) { return (v === 0 || isNaN(v) || v === null) ? '' : v + ' %'; }
     function formatDollar(v) { return (v === 0 || isNaN(v) || v === null) ? '' : v.toFixed(2) + ' $'; }
 
-    // Исправлено: комиссия умножается на 100, если Excel вернул долю (0.38 → 38)
     function findCommission(categoryShort, price) {
         if (!categoryShort || !dbRows || dbRows.length === 0) return null;
         if (price <= 300) return null;
@@ -292,7 +315,6 @@
         else if (price <= 5000) comm = row.commF;
         else if (price <= 10000) comm = row.commG;
         else comm = row.commH;
-        // Если значение меньше 1, значит Excel отдал долю (0.38), умножаем на 100
         if (comm > 0 && comm <= 1) {
             comm = Math.round(comm * 100);
         }
@@ -526,7 +548,7 @@
             else if (columns[i].group === '1688') th.classList.add('group-1688');
             else if (columns[i].group === 'wb') th.classList.add('group-wb');
             if (i === 3 || i === 17) th.classList.add('link-col');
-            // Закреплённые столбцы (Маржинальность, Рентабельность, Удаление)
+            // Закреплённые справа
             if (i >= columns.length - 3) {
                 th.classList.add('sticky-col');
                 th.setAttribute('data-col-index', i);
@@ -610,8 +632,8 @@
         for (let i = 0; i < ROWS; i++) updateRowDisplay(i);
     }
 
-    function getMarginColor(v) { return v <= 8 ? '#f4cccc' : v <= 15 ? '#fff2cc' : v <= 22 ? '#b7e1cd' : '#8ed6b3'; }
-    function getRentColor(v) { return v <= 30 ? '#f4cccc' : v <= 70 ? '#fff2cc' : v <= 100 ? '#b7e1cd' : '#8ed6b3'; }
+    function getMarginColor(v) { return v < 8 ? '#ffcccc' : ''; }
+    function getRentColor(v) { return v < 40 ? '#ffcccc' : ''; }
 
     function updateRowDisplay(idx) {
         const tr = rowsDOM[idx]; if (!tr) return;
@@ -721,7 +743,6 @@
         cells[39].textContent = (rentVal !== 0) ? rentVal.toFixed(2) + ' %' : '';
         cells[39].style.backgroundColor = (rentVal !== 0) ? getRentColor(rentVal) : '';
 
-        // Кнопка удаления
         const delCell = cells[40];
         delCell.innerHTML = '';
         if (r.link || r.price || r.name) {
