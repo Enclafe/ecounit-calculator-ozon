@@ -163,8 +163,8 @@
         }
         /* Кнопка сортировки в столбце "Мои" */
         .sort-btn {
-            background-color: #e93acd;
-            color: white;
+            background: transparent;
+            color: inherit;          /* белый от родительского group-wb */
             border: none;
             border-radius: 4px;
             cursor: pointer;
@@ -177,7 +177,7 @@
             transition: background-color 0.2s;
         }
         .sort-btn:hover {
-            background-color: #d12f9f;
+            background-color: rgba(255,255,255,0.2);
         }
     </style>
 </head>
@@ -631,12 +631,13 @@
             while (j < columns.length && columns[j].mainTitle === currentMain) { span++; j++; }
             const th = document.createElement('th');
             if (i === 41) {
-                // Кнопка сортировки "Мои"
+                // Кнопка сортировки "Мои" + розовый фон всей ячейки
+                th.classList.add('group-wb');   // <-- розовый фон как у WB
                 th.innerHTML = '';
                 th.style.textAlign = 'center';
                 const sortBtn = document.createElement('button');
                 sortBtn.className = 'sort-btn';
-                sortBtn.innerHTML = '⇅'; // стрелки
+                sortBtn.innerHTML = '⇅';
                 sortBtn.title = 'Показать "Мои" сверху / снизу';
                 sortBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
