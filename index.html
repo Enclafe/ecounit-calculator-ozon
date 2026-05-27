@@ -45,8 +45,7 @@
             text-overflow: ellipsis;
             box-sizing: border-box;
         }
-
-        /* Шапка-2 (названия) – базовый приоритет */
+        /* Шапка-2 (названия) */
         .data-table th {
             background-color: #f1f3f4; font-weight: 600;
             position: sticky; top: 0; z-index: 30;
@@ -55,33 +54,25 @@
             line-height: 36px;
             text-align: center !important;
         }
-
-        /* Шапка-1 (параметры) – самый низкий приоритет */
+        /* Шапка-1 (параметры) */
         .param-row th {
             z-index: 1;
             background-color: #f8f9fa;
             font-weight: normal;
             color: #333;
         }
-        /* В закреплённых столбцах – прозрачная */
+        /* Прозрачность в закреплённых */
         .param-row th.sticky-left,
         .param-row th.sticky-col {
             background-color: transparent !important;
         }
-
-        /* Обычные ячейки данных */
         .data-table td {
             z-index: 10;
         }
-
-        /* Закреплённые столбцы (фото, название, маржа, рентабельность, корзина) */
-        .sticky-left,
-        .sticky-col,
-        .data-table td:last-child {
+        .sticky-left, .sticky-col, .data-table td:last-child {
             position: sticky;
             z-index: 25;
         }
-        /* Шапка-2 в закреплённых столбцах – поверх всего */
         .data-table th.sticky-left,
         .data-table th.sticky-col {
             z-index: 40 !important;
@@ -93,57 +84,36 @@
             background-color: #fff;
             z-index: 25;
         }
-        .row-red td:last-child {
-            background-color: #ffcccc !important;
-        }
-
-        /* Убираем левое выравнивание заголовков */
-        .data-table th:nth-child(2),
-        .data-table th:nth-child(3),
-        .data-table th.link-col {
+        .row-red td:last-child { background-color: #ffcccc !important; }
+        .data-table th:nth-child(2), .data-table th:nth-child(3), .data-table th.link-col {
             text-align: center !important;
         }
-        .data-table td:nth-child(2),
-        .data-table td:nth-child(3),
-        .data-table td.link-col {
+        .data-table td:nth-child(2), .data-table td:nth-child(3), .data-table td.link-col {
             text-align: left !important;
         }
-
         .data-table th:first-child, .data-table td:first-child {
             width: 72px !important; min-width: 72px !important; max-width: 72px !important;
-            text-align: center;
-            padding: 0;
+            text-align: center; padding: 0;
         }
         .data-table td:first-child img {
-            width: 64px; height: 64px;
-            object-fit: cover;
-            display: block; margin: 0 auto;
-            border-radius: 16px;
+            width: 64px; height: 64px; object-fit: cover;
+            display: block; margin: 0 auto; border-radius: 16px;
         }
         .data-table th:nth-child(2), .data-table td:nth-child(2) {
             width: 150px !important; min-width: 150px !important; max-width: 150px !important;
-            text-align: left;
-            font-weight: 600;
+            text-align: left; font-weight: 600;
         }
         .data-table td:nth-child(2) .editable-cell { font-weight: 600; }
         .data-table th.link-col, .data-table td.link-col {
-            min-width: 60px !important;
-            max-width: 80px !important;
+            min-width: 60px !important; max-width: 80px !important;
         }
         .group-ozon { background-color: #005bff !important; color: white; }
         .group-1688 { background-color: #ff5b00 !important; color: white; }
         .group-wb { background-color: #e93acd !important; color: white; }
-
         .data-table td { vertical-align: middle; line-height: 1.2; }
-        .data-table td .editable-cell,
-        .data-table td .link-cell {
-            display: flex;
-            align-items: center;
-            height: 72px;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-            justify-content: inherit;
+        .data-table td .editable-cell, .data-table td .link-cell {
+            display: flex; align-items: center; height: 72px; width: 100%;
+            margin: 0; padding: 0; justify-content: inherit;
         }
         .data-table td .editable-cell { cursor: pointer; text-align: inherit; }
         .editable-cell input {
@@ -154,8 +124,7 @@
         .link-cell { cursor: pointer; }
         .link-cell a {
             display: inline-block; text-decoration: none; color: #005bff;
-            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-            max-width: 100%; line-height: 1.2;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; line-height: 1.2;
         }
         .link-cell a:hover { text-decoration: underline; }
         .link-cell input {
@@ -171,17 +140,13 @@
             background-color: #f1f3f4; text-align: center; padding: 10px 2rem;
             font-size: 0.75rem; color: #555; border-top: 1px solid #ddd;
         }
-
         .row-red td { background-color: #ffcccc !important; }
-
         .delete-btn {
             background: none; border: none; cursor: pointer; font-size: 1.3rem;
             opacity: 0.7; transition: opacity 0.2s; display: flex;
-            align-items: center; justify-content: center;
-            width: 100%; height: 100%; padding: 0;
+            align-items: center; justify-content: center; width: 100%; height: 100%; padding: 0;
         }
         .delete-btn:hover { opacity: 1; }
-
         .data-table td:not(.link-col):not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:last-child) .editable-cell {
             justify-content: center;
         }
@@ -215,7 +180,6 @@
         sppDiscount: 0,
         sppPrices: ['', '', '', '', '', '']
     };
-
     let rowsData = [];
     const ROWS = 500;
     const STORAGE_KEY = 'ecounit_data';
@@ -326,52 +290,43 @@
     function formatDollar(v) { return (v === 0 || isNaN(v) || v === null) ? '' : v.toFixed(2) + ' $'; }
 
     function findCommission(categoryShort, price) {
-    if (!categoryShort || !dbRows || dbRows.length === 0) return null;
-    if (price <= 300) return null;
+        if (!categoryShort || !dbRows || dbRows.length === 0) return null;
+        if (price <= 300) return null;
 
-    const target = categoryShort.toLowerCase().trim();
+        const target = categoryShort.toLowerCase().trim();
 
-    // 1. Ищем точные совпадения по typeB (столбец B)
-    let matches = dbRows.filter(r => r.typeB && r.typeB.toLowerCase().trim() === target);
-
-    // 2. Если точных нет, ищем частичные совпадения (typeB включает искомую строку)
-    if (matches.length === 0) {
-        matches = dbRows.filter(r => r.typeB && r.typeB.toLowerCase().includes(target));
-    }
-    if (matches.length === 0) {
-        // Пробуем найти по categoryA (столбец A) – запасной вариант
-        matches = dbRows.filter(r => r.categoryA && r.categoryA.toLowerCase().includes(target));
-    }
-    if (matches.length === 0) return null;
-
-    // 3. Если совпадений больше одного, отсеиваем строки, где categoryA содержит "Благотворительность"
-    let filtered = matches;
-    if (matches.length > 1) {
-        const благотв = 'благотворительность';
-        const withoutCharity = matches.filter(r => !r.categoryA || !r.categoryA.toLowerCase().includes(благотв));
-        if (withoutCharity.length > 0) {
-            filtered = withoutCharity;
+        // 1. Точные совпадения typeB
+        let matches = dbRows.filter(r => r.typeB && r.typeB.toLowerCase().trim() === target);
+        // 2. Частичные совпадения (если точных нет)
+        if (matches.length === 0) {
+            matches = dbRows.filter(r => r.typeB && r.typeB.toLowerCase().includes(target));
         }
+        // 3. Запасной поиск по categoryA
+        if (matches.length === 0) {
+            matches = dbRows.filter(r => r.categoryA && r.categoryA.toLowerCase().includes(target));
+        }
+        if (matches.length === 0) return null;
+
+        // 4. Исключаем строки с "Благотворительность" в categoryA, если совпадений больше одного
+        let filtered = matches;
+        if (matches.length > 1) {
+            const безБлаготв = matches.filter(r => !r.categoryA || !r.categoryA.toLowerCase().includes('благотворительность'));
+            if (безБлаготв.length > 0) filtered = безБлаготв;
+        }
+
+        const row = filtered[0];
+        let comm = 0;
+        if (price <= 1500) comm = row.commE;
+        else if (price <= 5000) comm = row.commF;
+        else if (price <= 10000) comm = row.commG;
+        else comm = row.commH;
+
+        if (comm > 0 && comm <= 1) {
+            comm = Math.round(comm * 100);
+        }
+        console.log(`[DB] Найдена комиссия для "${categoryShort}": ${comm}% (цена ${price}₽)`);
+        return comm || null;
     }
-
-    // 4. Берём первую подходящую строку из отфильтрованных
-    const row = filtered[0];
-
-    // 5. Выбираем комиссию в зависимости от цены
-    let comm = 0;
-    if (price <= 1500) comm = row.commE;
-    else if (price <= 5000) comm = row.commF;
-    else if (price <= 10000) comm = row.commG;
-    else comm = row.commH;
-
-    // Если Excel отдал долю (0.38 → 38), умножаем на 100
-    if (comm > 0 && comm <= 1) {
-        comm = Math.round(comm * 100);
-    }
-
-    console.log(`[DB] Найдена комиссия для "${categoryShort}": ${comm}% (цена ${price}₽), row:`, row);
-    return comm || null;
-}
 
     function recalcRow(idx) {
         const r = rowsData[idx];
@@ -382,17 +337,19 @@
             r.reklamaRub = r.procheeRub = r.totalExpensesWB = r.directExpenses = r.profit = r.nalogRub = r.netProfit = r.margin = r.rent = 0;
             return;
         }
+
         let comm;
         if (price <= 100) comm = 14;
         else if (price <= 300) comm = 20;
         else {
-    if (r.commissionManual != null && !isNaN(r.commissionManual)) {
-        comm = parseFloat(r.commissionManual);
-    } else {
-        const dbComm = findCommission(r.category, price);
-        comm = (dbComm !== null && !isNaN(dbComm)) ? dbComm : 0;
-    }
-}
+            // Если есть ручная комиссия, используем её, иначе ищем в БД
+            if (r.commissionManual != null && !isNaN(r.commissionManual)) {
+                comm = parseFloat(r.commissionManual);
+            } else {
+                const dbComm = findCommission(r.category, price);
+                comm = (dbComm !== null && !isNaN(dbComm)) ? dbComm : 0;
+            }
+        }
         r.commissionLeftValue = comm;
         r.commissionRub = price * comm / 100;
 
@@ -439,16 +396,13 @@
         const cleanPrice = String(item.price || '').replace(/\s/g, '').replace(',', '.');
         let numericPrice = parseFloat(cleanPrice) || 0;
 
-     if (globalParams.sppDiscount > 0 && numericPrice > 0) {
-    let corrected = numericPrice / (1 - globalParams.sppDiscount / 100);
-    corrected = Math.round(corrected);
-    if (corrected >= 300 && corrected <= 420) {
-        corrected = 300;
-    } else if (corrected >= 100 && corrected <= 150) {
-        corrected = 100;
-    }
-    numericPrice = corrected;
-}
+        if (globalParams.sppDiscount > 0 && numericPrice > 0) {
+            let corrected = numericPrice / (1 - globalParams.sppDiscount / 100);
+            corrected = Math.round(corrected);
+            if (corrected >= 300 && corrected <= 420) corrected = 300;
+            else if (corrected >= 100 && corrected <= 150) corrected = 100;
+            numericPrice = corrected;
+        }
 
         const emptyRow = rowsData.find(r => !r.link);
         if (!emptyRow) return;
@@ -788,10 +742,12 @@
             r.price = n; recalcRow(idx); updateRowDisplay(idx); saveToStorage();
         }, '₽'));
 
+        // Комиссия – обновлённое отображение
         cells[5].innerHTML = '';
         if (r.price > 300) {
-            cells[5].appendChild(createEditableNumberWithSymbol(
-                r.commissionManual != null && r.commissionManual !== 0 ? r.commissionManual : '', v => {
+            const displayVal = (r.commissionManual != null && !isNaN(r.commissionManual)) ? r.commissionManual :
+                              (r.commissionLeftValue !== 0 ? r.commissionLeftValue : '');
+            cells[5].appendChild(createEditableNumberWithSymbol(displayVal, v => {
                 let n = parseFloat(v);
                 r.commissionManual = isNaN(n) ? null : n;
                 recalcRow(idx); updateRowDisplay(idx); saveToStorage();
@@ -1065,7 +1021,7 @@
                 const right = parseFloat(rightInputs[i].value);
                 if (!isNaN(left) && left > 0 && !isNaN(right) && right > 0) {
                     const exact = ((left - right) / left) * 100;
-                    discounts.push(Math.round(exact)); // округление до целого по математике
+                    discounts.push(Math.round(exact));
                 }
             }
             if (discounts.length === 0) {
@@ -1074,7 +1030,7 @@
             } else {
                 const sum = discounts.reduce((a,b) => a+b, 0);
                 const avg = sum / discounts.length;
-                globalParams.sppDiscount = Math.floor(avg); // округление вниз до целого
+                globalParams.sppDiscount = Math.floor(avg);
                 document.getElementById('sppResult').textContent = `Средняя скидка: ${Math.floor(avg)}%`;
             }
             saveFields();
