@@ -544,8 +544,8 @@
         { group: "wb", mainTitle: "Чистая прибыль", paramType: null },
         { group: "wb", mainTitle: "Маржинальность", paramType: null },
         { group: "wb", mainTitle: "Рентабельность", paramType: null },
-        { group: "wb", mainTitle: "", paramType: null },
-        { group: "wb", mainTitle: "", paramType: null }  // столбец 41, в шапке будет кнопка сортировки
+        { group: "wb", mainTitle: "", paramType: null },          // столбец 40 (удаление)
+        { group: "wb", mainTitle: " ", paramType: null }         // столбец 41 (Мои) – пробел, чтобы не сливался с 40-м
     ];
 
     function buildHeader() {
@@ -580,8 +580,6 @@
             } else if (i >= 38 && i <= 40) {
                 th.classList.add('sticky-col');
                 th.setAttribute('data-col-index', i);
-            } else if (i === 41) {
-                // пустая ячейка в шапке-1 для столбца "Мои"
             }
 
             const paramCol = columns.slice(i, i + span).find(c => c.paramType && c.paramId);
@@ -604,7 +602,7 @@
                 else if (paramCol.paramType === 'rub') wrapper.appendChild(document.createTextNode(' ₽'));
                 else if (paramCol.paramType === 'tariff') wrapper.appendChild(document.createTextNode(' $/кг'));
                 th.appendChild(wrapper);
-            } else if (i !== 1 && i !== 41) {
+            } else if (i !== 1) {
                 th.textContent = '';
             }
             rowParams.appendChild(th);
@@ -635,7 +633,7 @@
                 });
                 th.appendChild(sortBtn);
             } else {
-                th.textContent = currentMain;
+                th.textContent = currentMain === ' ' ? '' : currentMain;  // пробел не показываем
                 if (span > 1) th.colSpan = span;
                 if (columns[i].group === 'ozon') th.classList.add('group-ozon');
                 else if (columns[i].group === '1688') th.classList.add('group-1688');
@@ -691,7 +689,6 @@
         measureEl.style.display = 'inline-block';
         document.body.appendChild(measureEl);
 
-        // вычисление ширин для заголовков (кроме закреплённых и спецстолбцов)
         const rowNamesThs = rowNames.querySelectorAll('th');
         rowNamesThs.forEach((th, idx) => {
             if (idx === 0 || idx === 1 || idx === 2 || linkIndices.includes(idx) || idx === 40 || idx === 41) return;
