@@ -403,12 +403,16 @@
         const cleanPrice = String(item.price || '').replace(/\s/g, '').replace(',', '.');
         let numericPrice = parseFloat(cleanPrice) || 0;
 
-        if (globalParams.sppDiscount > 0 && numericPrice > 0) {
-            let corrected = numericPrice / (1 - globalParams.sppDiscount / 100);
-            corrected = Math.round(corrected);
-            if (corrected >= 300 && corrected <= 400) corrected = 300;
-            numericPrice = corrected;
-        }
+     if (globalParams.sppDiscount > 0 && numericPrice > 0) {
+    let corrected = numericPrice / (1 - globalParams.sppDiscount / 100);
+    corrected = Math.round(corrected);
+    if (corrected >= 300 && corrected <= 420) {
+        corrected = 300;
+    } else if (corrected >= 100 && corrected <= 150) {
+        corrected = 100;
+    }
+    numericPrice = corrected;
+}
 
         const emptyRow = rowsData.find(r => !r.link);
         if (!emptyRow) return;
