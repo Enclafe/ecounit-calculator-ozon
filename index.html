@@ -91,6 +91,11 @@
         .data-table td:nth-child(2), .data-table td:nth-child(3), .data-table td.link-col {
             text-align: left !important;
         }
+        /* Центрирование категории (столбец 2 – но это название, поэтому уточним) */
+        .data-table th:nth-child(3),
+        .data-table td:nth-child(3) {
+            text-align: center !important;
+        }
         .data-table th:first-child, .data-table td:first-child {
             width: 72px !important; min-width: 72px !important; max-width: 72px !important;
             text-align: center; padding: 0;
@@ -342,13 +347,9 @@
         if (price <= 100) comm = 14;
         else if (price <= 300) comm = 20;
         else {
-            // Если есть ручная комиссия, используем её, иначе ищем в БД
-            if (r.commissionManual != null && !isNaN(r.commissionManual)) {
-                comm = parseFloat(r.commissionManual);
-            } else {
-                const dbComm = findCommission(r.category, price);
-                comm = (dbComm !== null && !isNaN(dbComm)) ? dbComm : 0;
-            }
+            // Всегда берём комиссию из БД, игнорируя commissionManual
+            const dbComm = findCommission(r.category, price);
+            comm = (dbComm !== null && !isNaN(dbComm)) ? dbComm : 0;
         }
         r.commissionLeftValue = comm;
         r.commissionRub = price * comm / 100;
@@ -415,10 +416,8 @@
         emptyRow.weight = item.weight || 0;
         emptyRow.showDefaultValues = true;
 
-        if (emptyRow.category && numericPrice > 300) {
-            const dbCommission = findCommission(emptyRow.category, numericPrice);
-            if (dbCommission !== null) emptyRow.commissionManual = dbCommission;
-        }
+        // commissionManual больше не используется, комиссия будет взята из БД при пересчёте
+        emptyRow.commissionManual = null;
 
         recalcRow(emptyRow.id);
         const idx = rowsData.findIndex(r => r.id === emptyRow.id);
@@ -742,16 +741,10 @@
             r.price = n; recalcRow(idx); updateRowDisplay(idx); saveToStorage();
         }, '₽'));
 
-        // Комиссия – обновлённое отображение
+        // Комиссия теперь только отображается, без возможности редактирования
         cells[5].innerHTML = '';
         if (r.price > 300) {
-            const displayVal = (r.commissionManual != null && !isNaN(r.commissionManual)) ? r.commissionManual :
-                              (r.commissionLeftValue !== 0 ? r.commissionLeftValue : '');
-            cells[5].appendChild(createEditableNumberWithSymbol(displayVal, v => {
-                let n = parseFloat(v);
-                r.commissionManual = isNaN(n) ? null : n;
-                recalcRow(idx); updateRowDisplay(idx); saveToStorage();
-            }, '%'));
+            cells[5].textContent = formatPercent(r.commissionLeftValue);
         } else {
             cells[5].textContent = (r.price !== 0 && r.commissionLeftValue !== 0) ? formatPercent(r.commissionLeftValue) : '';
         }
