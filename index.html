@@ -91,7 +91,7 @@
         .data-table td:nth-child(2), .data-table td:nth-child(3), .data-table td.link-col {
             text-align: left !important;
         }
-        /* Центрирование категории (столбец 2 – но это название, поэтому уточним) */
+        /* Центрирование категории */
         .data-table th:nth-child(3),
         .data-table td:nth-child(3) {
             text-align: center !important;
@@ -155,7 +155,7 @@
         .data-table td:not(.link-col):not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:last-child) .editable-cell {
             justify-content: center;
         }
-        /* Стили для чекбокса "продано" */
+        /* Стили для чекбокса "Мои" */
         .sold-checkbox {
             width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
         }
@@ -201,6 +201,7 @@
 
     let dbRows = [];
     let stickyRightOffsets = {};
+    let currentSearchQuery = '';  // текущая строка поиска
 
     function saveDbToStorage() { localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(dbRows)); }
     function loadDbFromStorage() {
@@ -270,7 +271,6 @@
                 data.rows.forEach((savedRow, idx) => {
                     if (idx < rowsData.length) Object.assign(rowsData[idx], savedRow);
                 });
-                // Применяем фильтр после загрузки
                 applyFilter();
             }
             return true;
@@ -294,37 +294,26 @@
         }
     }
 
-    // Функция сортировки и перерисовки таблицы согласно фильтру
     function applyFilter() {
-        // Сортируем rowsData
+        // Сортировка
         rowsData.sort((a, b) => {
-            // Определяем, является ли строка "пустой" (нет ссылки)
             const aEmpty = !a.link;
             const bEmpty = !b.link;
-            if (aEmpty && bEmpty) return a.id - b.id; // пустые сохраняют порядок
-            if (aEmpty) return 1;  // пустые всегда в конец
+            if (aEmpty && bEmpty) return a.id - b.id;
+            if (aEmpty) return 1;
             if (bEmpty) return -1;
-
-            // Оба непустые
             if (globalParams.showSoldFirst) {
-                // Мои (sold) вверху
                 if (a.sold && !b.sold) return -1;
                 if (!a.sold && b.sold) return 1;
             } else {
-                // Не мои вверху
                 if (!a.sold && b.sold) return -1;
                 if (a.sold && !b.sold) return 1;
             }
-            // Если оба в одной группе, сохраняем относительный порядок (по id)
             return a.id - b.id;
         });
-
-        // После сортировки нужно пересчитать индексы id и перестроить body
-        for (let i = 0; i < ROWS; i++) {
-            rowsData[i].id = i;
-        }
-        // Перестраиваем всю таблицу
+        for (let i = 0; i < ROWS; i++) rowsData[i].id = i;
         buildBody();
+        filterByName(currentSearchQuery);  // применить поиск после перестроения
     }
 
     async function fetchExchangeRates() {
@@ -344,9 +333,7 @@
     function findCommission(categoryShort, price) {
         if (!categoryShort || !dbRows || dbRows.length === 0) return null;
         if (price <= 300) return null;
-
         const target = categoryShort.toLowerCase().trim();
-
         let matches = dbRows.filter(r => r.typeB && r.typeB.toLowerCase().trim() === target);
         if (matches.length === 0) {
             matches = dbRows.filter(r => r.typeB && r.typeB.toLowerCase().includes(target));
@@ -355,23 +342,18 @@
             matches = dbRows.filter(r => r.categoryA && r.categoryA.toLowerCase().includes(target));
         }
         if (matches.length === 0) return null;
-
         let filtered = matches;
         if (matches.length > 1) {
             const безБлаготв = matches.filter(r => !r.categoryA || !r.categoryA.toLowerCase().includes('благотворительность'));
             if (безБлаготв.length > 0) filtered = безБлаготв;
         }
-
         const row = filtered[0];
         let comm = 0;
         if (price <= 1500) comm = row.commE;
         else if (price <= 5000) comm = row.commF;
         else if (price <= 10000) comm = row.commG;
         else comm = row.commH;
-
-        if (comm > 0 && comm <= 1) {
-            comm = Math.round(comm * 100);
-        }
+        if (comm > 0 && comm <= 1) comm = Math.round(comm * 100);
         console.log(`[DB] Найдена комиссия для "${categoryShort}": ${comm}% (цена ${price}₽)`);
         return comm || null;
     }
@@ -385,7 +367,6 @@
             r.reklamaRub = r.procheeRub = r.totalExpensesWB = r.directExpenses = r.profit = r.nalogRub = r.netProfit = r.margin = r.rent = 0;
             return;
         }
-
         let comm;
         if (price <= 100) comm = 14;
         else if (price <= 300) comm = 20;
@@ -438,7 +419,6 @@
     window.addItemFromExtension = function(item) {
         const cleanPrice = String(item.price || '').replace(/\s/g, '').replace(',', '.');
         let numericPrice = parseFloat(cleanPrice) || 0;
-
         if (globalParams.sppDiscount > 0 && numericPrice > 0) {
             let corrected = numericPrice / (1 - globalParams.sppDiscount / 100);
             corrected = Math.round(corrected);
@@ -446,8 +426,6 @@
             else if (corrected >= 100 && corrected <= 150) corrected = 100;
             numericPrice = corrected;
         }
-
-        // Ищем первую пустую строку (без link)
         const emptyRow = rowsData.find(r => !r.link);
         if (!emptyRow) return;
         emptyRow.photo = item.photoUrl || '';
@@ -458,10 +436,9 @@
         emptyRow.purchaseCNY = 0;
         emptyRow.weight = item.weight || 0;
         emptyRow.showDefaultValues = true;
-        emptyRow.sold = false;  // новый товар не продан
-
+        emptyRow.sold = false;
+        emptyRow.commissionManual = null;
         recalcRow(emptyRow.id);
-        // После добавления применяем фильтр, чтобы порядок обновился
         applyFilter();
         saveToStorage();
     };
@@ -526,7 +503,7 @@
 
     const columns = [
         { group: "ozon", mainTitle: "Фото", paramType: null },
-        { group: "ozon", mainTitle: "Название", paramType: null },
+        { group: "ozon", mainTitle: "Название", paramType: "search" },  // special flag
         { group: "ozon", mainTitle: "Категория", paramType: null },
         { group: "ozon", mainTitle: "Ссылка", paramType: null },
         { group: "ozon", mainTitle: "Цена", paramType: null },
@@ -566,7 +543,7 @@
         { group: "wb", mainTitle: "Маржинальность", paramType: null },
         { group: "wb", mainTitle: "Рентабельность", paramType: null },
         { group: "wb", mainTitle: "", paramType: null },
-        { group: "wb", mainTitle: "Продано", paramType: null }  // новый столбец
+        { group: "wb", mainTitle: "Мои", paramType: null }
     ];
 
     function buildHeader() {
@@ -583,20 +560,28 @@
             const th = document.createElement('th');
             th.style.backgroundColor = '#f8f9fa';
             if (span > 1) th.colSpan = span;
-            // sticky-left: фото (0), название (1)
             if (i === 0) {
                 th.classList.add('sticky-left');
                 th.style.left = '0px';
             } else if (i === 1) {
                 th.classList.add('sticky-left');
                 th.style.left = '72px';
-            } else if (i >= 38 && i <= 40) { // маржа, рент, удаление
-                th.classList.add('sticky-col');
-                th.setAttribute('data-col-index', i);
-            } else if (i === 41) { // новый столбец "Продано"
+                // Добавляем поле поиска по названию
+                const searchInput = document.createElement('input');
+                searchInput.type = 'text';
+                searchInput.placeholder = 'Поиск...';
+                searchInput.style.cssText = 'width:100%; padding:2px 4px; border:1px solid #ccc; border-radius:3px; font-size:0.7rem;';
+                searchInput.addEventListener('input', function(e) {
+                    currentSearchQuery = e.target.value;
+                    filterByName(currentSearchQuery);
+                });
+                th.appendChild(searchInput);
+            } else if (i >= 38 && i <= 40) { // маржа, рентабельность, удаление
                 th.classList.add('sticky-col');
                 th.setAttribute('data-col-index', i);
             }
+            // для столбца 41 ("Мои") ничего не добавляем
+
             const paramCol = columns.slice(i, i + span).find(c => c.paramType && c.paramId);
             if (paramCol) {
                 const wrapper = document.createElement('div');
@@ -617,7 +602,7 @@
                 else if (paramCol.paramType === 'rub') wrapper.appendChild(document.createTextNode(' ₽'));
                 else if (paramCol.paramType === 'tariff') wrapper.appendChild(document.createTextNode(' $/кг'));
                 th.appendChild(wrapper);
-            } else {
+            } else if (i !== 1) { // не для названия (там уже есть поиск)
                 th.textContent = '';
             }
             rowParams.appendChild(th);
@@ -640,7 +625,6 @@
             else if (columns[i].group === 'wb') th.classList.add('group-wb');
             if (i === 3 || i === 17) th.classList.add('link-col');
 
-            // sticky классы
             if (i === 0) {
                 th.classList.add('sticky-left');
                 th.style.left = '0px';
@@ -650,12 +634,9 @@
             } else if (i === 38 || i === 39 || i === 40) {
                 th.classList.add('sticky-col');
                 th.setAttribute('data-col-index', i);
-            } else if (i === 41) {
-                th.classList.add('sticky-col');
-                th.setAttribute('data-col-index', i);
             }
+            // для 41 – нет sticky
 
-            // Кнопка очистки в последнем столбце (удаление, индекс 40)
             if (i === 40) {
                 th.innerHTML = '';
                 th.style.textAlign = 'center';
@@ -670,7 +651,6 @@
                 });
                 th.appendChild(clearBtn);
             }
-            // Для столбца "Продано" (41) не добавляем кнопку очистки
             titleCells.push({th, start: i, end: i + span - 1, span});
             rowNames.appendChild(th);
             i = j;
@@ -684,7 +664,7 @@
         colWidths[1] = 150;
         colWidths[2] = 100;
         colWidths[40] = 46;  // удаление
-        colWidths[41] = 50;  // новый столбец "Продано" (узкий)
+        colWidths[41] = 60;  // Мои (ширина чекбокса)
         const linkIndices = [3, 17];
 
         const measureEl = document.createElement('span');
@@ -713,12 +693,11 @@
         document.body.removeChild(measureEl);
         table.insertBefore(colgroup, table.firstChild);
 
-        const lastIdx = 41;  // индекс последнего столбца
-        // Пересчёт смещений справа для sticky
-        stickyRightOffsets[41] = 0;  // "Продано"
-        stickyRightOffsets[40] = colWidths[41];  // удаление
-        stickyRightOffsets[39] = colWidths[41] + colWidths[40];  // рентабельность
-        stickyRightOffsets[38] = colWidths[41] + colWidths[40] + colWidths[39];  // маржинальность
+        // Пересчёт смещений для sticky (без столбца 41)
+        const lastIdx = 40;
+        stickyRightOffsets[40] = 0;                     // удаление
+        stickyRightOffsets[39] = colWidths[40];          // рентабельность
+        stickyRightOffsets[38] = colWidths[40] + colWidths[39];  // маржинальность
 
         document.querySelectorAll('.sticky-col[data-col-index]').forEach(th => {
             const idx = parseInt(th.getAttribute('data-col-index'), 10);
@@ -734,7 +713,6 @@
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
         rowsDOM = [];
-        const lastIdx = 41;
         for (let i = 0; i < ROWS; i++) {
             const tr = document.createElement('tr');
             tr.setAttribute('data-row-id', i);
@@ -748,18 +726,38 @@
                 } else if (j === 1) {
                     td.classList.add('sticky-left');
                     td.style.left = '72px';
-                } else if (j === 38 || j === 39 || j === 40 || j === 41) {
+                } else if (j === 38 || j === 39 || j === 40) {
                     td.classList.add('sticky-col');
                     td.style.right = (stickyRightOffsets[j] || 0) + 'px';
                 }
+                // j === 41 – без sticky
 
                 tr.appendChild(td);
             }
             tbody.appendChild(tr);
             rowsDOM.push(tr);
         }
-        // Обновить отображение строк
         for (let i = 0; i < ROWS; i++) updateRowDisplay(i);
+    }
+
+    function filterByName(query) {
+        const q = query.toLowerCase().trim();
+        for (let i = 0; i < rowsDOM.length; i++) {
+            const tr = rowsDOM[i];
+            if (!tr) continue;
+            const r = rowsData[i];
+            // пустые строки (без ссылки) показываем всегда
+            if (!r.link) {
+                tr.style.display = '';
+                continue;
+            }
+            const name = (r.name || '').toLowerCase();
+            if (q === '' || name.includes(q)) {
+                tr.style.display = '';
+            } else {
+                tr.style.display = 'none';
+            }
+        }
     }
 
     function getMarginColor(v) { return v < 8 ? '#ffcccc' : v <= 15 ? '#fff2cc' : v <= 22 ? '#b7e1cd' : '#8ed6b3'; }
@@ -781,6 +779,7 @@
         const nameDiv = createEditableText(r.name, (val) => {
             if (val.length) val = val.charAt(0).toUpperCase() + val.slice(1);
             r.name = val; recalcRow(idx); updateRowDisplay(idx); saveToStorage();
+            // После переименования фильтр не слетит, т.к. он не перестраивает таблицу
         });
         if (r.name) nameDiv.title = r.name;
         cells[1].appendChild(nameDiv);
@@ -883,7 +882,7 @@
             delCell.appendChild(delBtn);
         }
 
-        // Столбец "Продано" (41) – чекбокс
+        // Столбец "Мои" (41) – чекбокс
         const soldCell = cells[41];
         soldCell.innerHTML = '';
         if (r.link || r.price || r.name) {
@@ -892,14 +891,12 @@
             checkbox.checked = r.sold;
             checkbox.addEventListener('change', function(e) {
                 if (!this.checked) {
-                    // Снятие галочки – подтверждение
-                    if (!confirm('Убрать отметку "Продано"?')) {
+                    if (!confirm('Убрать отметку "Мои"?')) {
                         this.checked = true;
                         return;
                     }
                 }
                 r.sold = this.checked;
-                // При изменении состояния пересчитывать не нужно, но сохраняем и применяем фильтр
                 saveToStorage();
                 applyFilter();
             });
@@ -1045,7 +1042,7 @@
         }
     }
 
-    // ========== Модальное окно СПП (с сохранением полей) ==========
+    // ========== Модальное окно СПП ==========
     function createSppModal() {
         const modal = document.createElement('div');
         modal.id = 'sppModal';
@@ -1136,9 +1133,7 @@
         await fetchExchangeRates();
         buildHeader();
         recalcAllRows();
-        // applyFilter() уже вызывается в loadFromStorage, но на всякий случай
         if (!loaded) applyFilter();
-        else buildBody(); // если загрузились, buildBody уже вызван из applyFilter, но перестрахуемся – loadFromStorage вызывает applyFilter, который вызывает buildBody
 
         document.getElementById('uploadDbBtn').addEventListener('click', () => {
             const input = document.createElement('input');
