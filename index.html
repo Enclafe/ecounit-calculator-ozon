@@ -164,7 +164,7 @@
         /* Кнопка сортировки в столбце "Мои" */
         .sort-btn {
             background: transparent;
-            color: inherit;          /* белый от родительского group-wb */
+            color: inherit;
             border: none;
             border-radius: 4px;
             cursor: pointer;
@@ -178,6 +178,26 @@
         }
         .sort-btn:hover {
             background-color: rgba(255,255,255,0.2);
+        }
+
+        /* Разделители для закреплённых столбцов */
+        .data-table th.sticky-left:nth-child(2),
+        .data-table td.sticky-left:nth-child(2) {
+            border-right: 2px solid #bbb;
+        }
+        .data-table th.sticky-col:nth-child(39),
+        .data-table td.sticky-col:nth-child(39) {
+            border-right: 2px solid #bbb;
+            min-width: 110px;
+        }
+        .data-table th.sticky-col:nth-child(40),
+        .data-table td.sticky-col:nth-child(40) {
+            border-right: 2px solid #bbb;
+            min-width: 110px;
+        }
+        .data-table th.sticky-col:nth-child(41),
+        .data-table td.sticky-col:nth-child(41) {
+            border-right: 2px solid #bbb;
         }
     </style>
 </head>
@@ -557,8 +577,8 @@
         { group: "wb", mainTitle: "Чистая прибыль", paramType: null },
         { group: "wb", mainTitle: "Маржинальность", paramType: null },
         { group: "wb", mainTitle: "Рентабельность", paramType: null },
-        { group: "wb", mainTitle: "", paramType: null },          // столбец 40 (удаление)
-        { group: "wb", mainTitle: " ", paramType: null }         // столбец 41 (Мои)
+        { group: "wb", mainTitle: "", paramType: null },
+        { group: "wb", mainTitle: " ", paramType: null }
     ];
 
     function buildHeader() {
@@ -631,8 +651,7 @@
             while (j < columns.length && columns[j].mainTitle === currentMain) { span++; j++; }
             const th = document.createElement('th');
             if (i === 41) {
-                // Кнопка сортировки "Мои" + розовый фон всей ячейки
-                th.classList.add('group-wb');   // <-- розовый фон как у WB
+                th.classList.add('group-wb');
                 th.innerHTML = '';
                 th.style.textAlign = 'center';
                 const sortBtn = document.createElement('button');
@@ -691,8 +710,8 @@
         colWidths[0] = 72;
         colWidths[1] = 150;
         colWidths[2] = 100;
-        colWidths[40] = 46;  // удаление
-        colWidths[41] = 50;  // "Мои"
+        colWidths[40] = 46;
+        colWidths[41] = 50;
         const linkIndices = [3, 17];
 
         const measureEl = document.createElement('span');
@@ -708,7 +727,7 @@
             if (idx === 0 || idx === 1 || idx === 2 || linkIndices.includes(idx) || idx === 40 || idx === 41) return;
             measureEl.textContent = th.textContent;
             const textWidth = measureEl.offsetWidth + 20;
-            const totalWidth = Math.max(textWidth, 100);
+            const totalWidth = Math.max(textWidth, 110); // минимальная ширина для Маржинальности и Рентабельности
             colWidths[idx] = totalWidth;
         });
 
@@ -721,10 +740,9 @@
         document.body.removeChild(measureEl);
         table.insertBefore(colgroup, table.firstChild);
 
-        // Пересчёт смещений для sticky (без столбца 41)
-        stickyRightOffsets[40] = 0;                     // удаление
-        stickyRightOffsets[39] = colWidths[40];          // рентабельность
-        stickyRightOffsets[38] = colWidths[40] + colWidths[39];  // маржинальность
+        stickyRightOffsets[40] = 0;
+        stickyRightOffsets[39] = colWidths[40];
+        stickyRightOffsets[38] = colWidths[40] + colWidths[39];
 
         document.querySelectorAll('.sticky-col[data-col-index]').forEach(th => {
             const idx = parseInt(th.getAttribute('data-col-index'), 10);
@@ -757,7 +775,6 @@
                     td.classList.add('sticky-col');
                     td.style.right = (stickyRightOffsets[j] || 0) + 'px';
                 }
-                // j === 41 без sticky
 
                 tr.appendChild(td);
             }
@@ -893,7 +910,6 @@
         cells[39].textContent = (rentVal !== 0) ? rentVal.toFixed(2) + ' %' : '';
         cells[39].style.backgroundColor = (rentVal !== 0) ? getRentColor(rentVal) : '';
 
-        // Кнопка удаления (столбец 40)
         const delCell = cells[40];
         delCell.innerHTML = '';
         if (r.link || r.price || r.name) {
@@ -907,7 +923,6 @@
             delCell.appendChild(delBtn);
         }
 
-        // Столбец "Мои" (41) – чекбокс
         const soldCell = cells[41];
         soldCell.innerHTML = '';
         if (r.link || r.price || r.name) {
