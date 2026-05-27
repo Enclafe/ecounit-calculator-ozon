@@ -155,12 +155,20 @@
         .data-table td:not(.link-col):not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:last-child) .editable-cell {
             justify-content: center;
         }
+        /* Стили для чекбокса "продано" */
+        .sold-checkbox {
+            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+        }
+        .sold-checkbox input {
+            width: 20px; height: 20px; cursor: pointer;
+        }
     </style>
 </head>
 <body>
 <div class="header">
     <h1>ECOUNIT</h1>
     <div>
+        <button class="upload-btn" id="myBtn" style="margin-right: 8px;">Мои</button>
         <a class="upload-btn" id="ozonCalcBtn" href="https://calculator.ozon.ru/" target="_blank" style="margin-right: 8px;">OZON калькулятор</a>
         <button class="upload-btn" id="sppBtn" style="margin-right: 8px;">СПП</button>
         <button class="upload-btn" id="uploadDbBtn">Загрузить БД</button>
@@ -183,7 +191,8 @@
         commission1688Percent: 0, brakPercent: 0, reklamaPercent: 0,
         upakovkaRub: 0, procheePercent: 0, nalogPercent: 0,
         sppDiscount: 0,
-        sppPrices: ['', '', '', '', '', '']
+        sppPrices: ['', '', '', '', '', ''],
+        showSoldFirst: false  // по умолчанию "мои" внизу
     };
     let rowsData = [];
     const ROWS = 500;
@@ -237,7 +246,8 @@
                 purchaseCNY: row.purchaseCNY, weight: row.weight,
                 link1688: row.link1688, reklamaPercentLocal: row.reklamaPercentLocal,
                 upakovkaRubLocal: row.upakovkaRubLocal, photo: row.photo,
-                showDefaultValues: row.showDefaultValues
+                showDefaultValues: row.showDefaultValues,
+                sold: row.sold
             }))
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -253,12 +263,15 @@
                 if (!globalParams.sppPrices || globalParams.sppPrices.length !== 6) {
                     globalParams.sppPrices = ['', '', '', '', '', ''];
                 }
+                if (globalParams.showSoldFirst === undefined) globalParams.showSoldFirst = false;
             }
             if (data.rows && Array.isArray(data.rows)) {
                 initRows();
                 data.rows.forEach((savedRow, idx) => {
                     if (idx < rowsData.length) Object.assign(rowsData[idx], savedRow);
                 });
+                // Применяем фильтр после загрузки
+                applyFilter();
             }
             return true;
         } catch (e) { console.warn('Ошибка загрузки', e); return false; }
@@ -275,9 +288,43 @@
                 logisticUSD: 0, logisticRub1688: 0, comm1688Rub: 0, brakRub: 0, costPrice: 0,
                 reklamaPercentLocal: null, reklamaRub: 0, upakovkaRubLocal: null, procheeRub: 0,
                 totalExpensesWB: 0, directExpenses: 0, profit: 0, nalogRub: 0, netProfit: 0,
-                margin: 0, rent: 0, showDefaultValues: false
+                margin: 0, rent: 0, showDefaultValues: false,
+                sold: false
             });
         }
+    }
+
+    // Функция сортировки и перерисовки таблицы согласно фильтру
+    function applyFilter() {
+        // Сортируем rowsData
+        rowsData.sort((a, b) => {
+            // Определяем, является ли строка "пустой" (нет ссылки)
+            const aEmpty = !a.link;
+            const bEmpty = !b.link;
+            if (aEmpty && bEmpty) return a.id - b.id; // пустые сохраняют порядок
+            if (aEmpty) return 1;  // пустые всегда в конец
+            if (bEmpty) return -1;
+
+            // Оба непустые
+            if (globalParams.showSoldFirst) {
+                // Мои (sold) вверху
+                if (a.sold && !b.sold) return -1;
+                if (!a.sold && b.sold) return 1;
+            } else {
+                // Не мои вверху
+                if (!a.sold && b.sold) return -1;
+                if (a.sold && !b.sold) return 1;
+            }
+            // Если оба в одной группе, сохраняем относительный порядок (по id)
+            return a.id - b.id;
+        });
+
+        // После сортировки нужно пересчитать индексы id и перестроить body
+        for (let i = 0; i < ROWS; i++) {
+            rowsData[i].id = i;
+        }
+        // Перестраиваем всю таблицу
+        buildBody();
     }
 
     async function fetchExchangeRates() {
@@ -300,19 +347,15 @@
 
         const target = categoryShort.toLowerCase().trim();
 
-        // 1. Точные совпадения typeB
         let matches = dbRows.filter(r => r.typeB && r.typeB.toLowerCase().trim() === target);
-        // 2. Частичные совпадения (если точных нет)
         if (matches.length === 0) {
             matches = dbRows.filter(r => r.typeB && r.typeB.toLowerCase().includes(target));
         }
-        // 3. Запасной поиск по categoryA
         if (matches.length === 0) {
             matches = dbRows.filter(r => r.categoryA && r.categoryA.toLowerCase().includes(target));
         }
         if (matches.length === 0) return null;
 
-        // 4. Исключаем строки с "Благотворительность" в categoryA, если совпадений больше одного
         let filtered = matches;
         if (matches.length > 1) {
             const безБлаготв = matches.filter(r => !r.categoryA || !r.categoryA.toLowerCase().includes('благотворительность'));
@@ -347,7 +390,6 @@
         if (price <= 100) comm = 14;
         else if (price <= 300) comm = 20;
         else {
-            // Всегда берём комиссию из БД, игнорируя commissionManual
             const dbComm = findCommission(r.category, price);
             comm = (dbComm !== null && !isNaN(dbComm)) ? dbComm : 0;
         }
@@ -405,6 +447,7 @@
             numericPrice = corrected;
         }
 
+        // Ищем первую пустую строку (без link)
         const emptyRow = rowsData.find(r => !r.link);
         if (!emptyRow) return;
         emptyRow.photo = item.photoUrl || '';
@@ -415,13 +458,11 @@
         emptyRow.purchaseCNY = 0;
         emptyRow.weight = item.weight || 0;
         emptyRow.showDefaultValues = true;
-
-        // commissionManual больше не используется, комиссия будет взята из БД при пересчёте
-        emptyRow.commissionManual = null;
+        emptyRow.sold = false;  // новый товар не продан
 
         recalcRow(emptyRow.id);
-        const idx = rowsData.findIndex(r => r.id === emptyRow.id);
-        if (rowsDOM[idx]) updateRowDisplay(idx);
+        // После добавления применяем фильтр, чтобы порядок обновился
+        applyFilter();
         saveToStorage();
     };
 
@@ -478,7 +519,8 @@
             logisticUSD: 0, logisticRub1688: 0, comm1688Rub: 0, brakRub: 0, costPrice: 0,
             reklamaPercentLocal: null, reklamaRub: 0, upakovkaRubLocal: null, procheeRub: 0,
             totalExpensesWB: 0, directExpenses: 0, profit: 0, nalogRub: 0, netProfit: 0,
-            margin: 0, rent: 0, showDefaultValues: false
+            margin: 0, rent: 0, showDefaultValues: false,
+            sold: false
         };
     }
 
@@ -523,7 +565,8 @@
         { group: "wb", mainTitle: "Чистая прибыль", paramType: null },
         { group: "wb", mainTitle: "Маржинальность", paramType: null },
         { group: "wb", mainTitle: "Рентабельность", paramType: null },
-        { group: "wb", mainTitle: "", paramType: null }
+        { group: "wb", mainTitle: "", paramType: null },
+        { group: "wb", mainTitle: "Продано", paramType: null }  // новый столбец
     ];
 
     function buildHeader() {
@@ -540,13 +583,17 @@
             const th = document.createElement('th');
             th.style.backgroundColor = '#f8f9fa';
             if (span > 1) th.colSpan = span;
+            // sticky-left: фото (0), название (1)
             if (i === 0) {
                 th.classList.add('sticky-left');
                 th.style.left = '0px';
             } else if (i === 1) {
                 th.classList.add('sticky-left');
                 th.style.left = '72px';
-            } else if (i >= columns.length - 3) {
+            } else if (i >= 38 && i <= 40) { // маржа, рент, удаление
+                th.classList.add('sticky-col');
+                th.setAttribute('data-col-index', i);
+            } else if (i === 41) { // новый столбец "Продано"
                 th.classList.add('sticky-col');
                 th.setAttribute('data-col-index', i);
             }
@@ -593,6 +640,7 @@
             else if (columns[i].group === 'wb') th.classList.add('group-wb');
             if (i === 3 || i === 17) th.classList.add('link-col');
 
+            // sticky классы
             if (i === 0) {
                 th.classList.add('sticky-left');
                 th.style.left = '0px';
@@ -602,9 +650,13 @@
             } else if (i === 38 || i === 39 || i === 40) {
                 th.classList.add('sticky-col');
                 th.setAttribute('data-col-index', i);
+            } else if (i === 41) {
+                th.classList.add('sticky-col');
+                th.setAttribute('data-col-index', i);
             }
 
-            if (i === columns.length - 1) {
+            // Кнопка очистки в последнем столбце (удаление, индекс 40)
+            if (i === 40) {
                 th.innerHTML = '';
                 th.style.textAlign = 'center';
                 const clearBtn = document.createElement('button');
@@ -618,6 +670,7 @@
                 });
                 th.appendChild(clearBtn);
             }
+            // Для столбца "Продано" (41) не добавляем кнопку очистки
             titleCells.push({th, start: i, end: i + span - 1, span});
             rowNames.appendChild(th);
             i = j;
@@ -630,7 +683,8 @@
         colWidths[0] = 72;
         colWidths[1] = 150;
         colWidths[2] = 100;
-        colWidths[columns.length - 1] = 46;
+        colWidths[40] = 46;  // удаление
+        colWidths[41] = 50;  // новый столбец "Продано" (узкий)
         const linkIndices = [3, 17];
 
         const measureEl = document.createElement('span');
@@ -642,7 +696,7 @@
         document.body.appendChild(measureEl);
 
         titleCells.forEach(({th, start, end, span}) => {
-            if (start === 0 || start === 1 || start === 2 || linkIndices.includes(start) || start === columns.length - 1) return;
+            if (start === 0 || start === 1 || start === 2 || linkIndices.includes(start) || start === 40 || start === 41) return;
             measureEl.textContent = th.textContent;
             const textWidth = measureEl.offsetWidth + 20;
             const totalWidth = Math.max(textWidth, 100);
@@ -659,10 +713,12 @@
         document.body.removeChild(measureEl);
         table.insertBefore(colgroup, table.firstChild);
 
-        const lastIdx = columns.length - 1;
-        stickyRightOffsets[lastIdx] = 0;
-        stickyRightOffsets[lastIdx - 1] = colWidths[lastIdx];
-        stickyRightOffsets[lastIdx - 2] = colWidths[lastIdx] + colWidths[lastIdx - 1];
+        const lastIdx = 41;  // индекс последнего столбца
+        // Пересчёт смещений справа для sticky
+        stickyRightOffsets[41] = 0;  // "Продано"
+        stickyRightOffsets[40] = colWidths[41];  // удаление
+        stickyRightOffsets[39] = colWidths[41] + colWidths[40];  // рентабельность
+        stickyRightOffsets[38] = colWidths[41] + colWidths[40] + colWidths[39];  // маржинальность
 
         document.querySelectorAll('.sticky-col[data-col-index]').forEach(th => {
             const idx = parseInt(th.getAttribute('data-col-index'), 10);
@@ -678,7 +734,7 @@
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
         rowsDOM = [];
-        const lastIdx = columns.length - 1;
+        const lastIdx = 41;
         for (let i = 0; i < ROWS; i++) {
             const tr = document.createElement('tr');
             tr.setAttribute('data-row-id', i);
@@ -692,7 +748,7 @@
                 } else if (j === 1) {
                     td.classList.add('sticky-left');
                     td.style.left = '72px';
-                } else if (j === lastIdx || j === lastIdx - 1 || j === lastIdx - 2) {
+                } else if (j === 38 || j === 39 || j === 40 || j === 41) {
                     td.classList.add('sticky-col');
                     td.style.right = (stickyRightOffsets[j] || 0) + 'px';
                 }
@@ -702,6 +758,7 @@
             tbody.appendChild(tr);
             rowsDOM.push(tr);
         }
+        // Обновить отображение строк
         for (let i = 0; i < ROWS; i++) updateRowDisplay(i);
     }
 
@@ -741,7 +798,7 @@
             r.price = n; recalcRow(idx); updateRowDisplay(idx); saveToStorage();
         }, '₽'));
 
-        // Комиссия теперь только отображается, без возможности редактирования
+        // Комиссия только отображается
         cells[5].innerHTML = '';
         if (r.price > 300) {
             cells[5].textContent = formatPercent(r.commissionLeftValue);
@@ -812,6 +869,7 @@
         cells[39].textContent = (rentVal !== 0) ? rentVal.toFixed(2) + ' %' : '';
         cells[39].style.backgroundColor = (rentVal !== 0) ? getRentColor(rentVal) : '';
 
+        // Кнопка удаления (столбец 40)
         const delCell = cells[40];
         delCell.innerHTML = '';
         if (r.link || r.price || r.name) {
@@ -823,6 +881,32 @@
                 if (confirm('Удалить этот товар?')) deleteRow(idx);
             });
             delCell.appendChild(delBtn);
+        }
+
+        // Столбец "Продано" (41) – чекбокс
+        const soldCell = cells[41];
+        soldCell.innerHTML = '';
+        if (r.link || r.price || r.name) {
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = r.sold;
+            checkbox.addEventListener('change', function(e) {
+                if (!this.checked) {
+                    // Снятие галочки – подтверждение
+                    if (!confirm('Убрать отметку "Продано"?')) {
+                        this.checked = true;
+                        return;
+                    }
+                }
+                r.sold = this.checked;
+                // При изменении состояния пересчитывать не нужно, но сохраняем и применяем фильтр
+                saveToStorage();
+                applyFilter();
+            });
+            const wrapper = document.createElement('div');
+            wrapper.className = 'sold-checkbox';
+            wrapper.appendChild(checkbox);
+            soldCell.appendChild(wrapper);
         }
 
         if (r.price > 0 && marginVal <= 0) tr.classList.add('row-red');
@@ -1052,7 +1136,9 @@
         await fetchExchangeRates();
         buildHeader();
         recalcAllRows();
-        buildBody();
+        // applyFilter() уже вызывается в loadFromStorage, но на всякий случай
+        if (!loaded) applyFilter();
+        else buildBody(); // если загрузились, buildBody уже вызван из applyFilter, но перестрахуемся – loadFromStorage вызывает applyFilter, который вызывает buildBody
 
         document.getElementById('uploadDbBtn').addEventListener('click', () => {
             const input = document.createElement('input');
@@ -1074,6 +1160,12 @@
                 if (input) input.value = globalParams.sppPrices[i] || '';
             }
             sppModal.style.display = 'flex';
+        });
+
+        document.getElementById('myBtn').addEventListener('click', () => {
+            globalParams.showSoldFirst = !globalParams.showSoldFirst;
+            saveToStorage();
+            applyFilter();
         });
     }
 
