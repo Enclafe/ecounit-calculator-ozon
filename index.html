@@ -385,7 +385,14 @@
         let comm;
         if (price <= 100) comm = 14;
         else if (price <= 300) comm = 20;
-        else comm = (r.commissionManual != null && !isNaN(r.commissionManual)) ? parseFloat(r.commissionManual) : 0;
+        else {
+    if (r.commissionManual != null && !isNaN(r.commissionManual)) {
+        comm = parseFloat(r.commissionManual);
+    } else {
+        const dbComm = findCommission(r.category, price);
+        comm = (dbComm !== null && !isNaN(dbComm)) ? dbComm : 0;
+    }
+}
         r.commissionLeftValue = comm;
         r.commissionRub = price * comm / 100;
 
