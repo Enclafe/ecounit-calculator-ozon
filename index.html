@@ -155,12 +155,16 @@
         .data-table td:not(.link-col):not(:first-child):not(:nth-child(2)):not(:nth-child(3)):not(:last-child) .editable-cell {
             justify-content: center;
         }
-        /* Стили для чекбокса "Мои" */
         .sold-checkbox {
             width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
         }
         .sold-checkbox input {
             width: 20px; height: 20px; cursor: pointer;
+        }
+        /* Кнопка сортировки в столбце "Мои" */
+        .sort-btn {
+            background: none; border: none; cursor: pointer; font-size: 1.2rem; color: inherit;
+            padding: 0; line-height: 1; display: inline-flex; align-items: center; justify-content: center;
         }
     </style>
 </head>
@@ -168,7 +172,6 @@
 <div class="header">
     <h1>ECOUNIT</h1>
     <div>
-        <button class="upload-btn" id="myBtn" style="margin-right: 8px;">Мои</button>
         <a class="upload-btn" id="ozonCalcBtn" href="https://calculator.ozon.ru/" target="_blank" style="margin-right: 8px;">OZON калькулятор</a>
         <button class="upload-btn" id="sppBtn" style="margin-right: 8px;">СПП</button>
         <button class="upload-btn" id="uploadDbBtn">Загрузить БД</button>
@@ -192,7 +195,7 @@
         upakovkaRub: 0, procheePercent: 0, nalogPercent: 0,
         sppDiscount: 0,
         sppPrices: ['', '', '', '', '', ''],
-        showSoldFirst: false  // по умолчанию "мои" внизу
+        showSoldFirst: false
     };
     let rowsData = [];
     const ROWS = 500;
@@ -201,7 +204,7 @@
 
     let dbRows = [];
     let stickyRightOffsets = {};
-    let currentSearchQuery = '';  // текущая строка поиска
+    let currentSearchQuery = '';
 
     function saveDbToStorage() { localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(dbRows)); }
     function loadDbFromStorage() {
@@ -295,7 +298,6 @@
     }
 
     function applyFilter() {
-        // Сортировка
         rowsData.sort((a, b) => {
             const aEmpty = !a.link;
             const bEmpty = !b.link;
@@ -313,7 +315,7 @@
         });
         for (let i = 0; i < ROWS; i++) rowsData[i].id = i;
         buildBody();
-        filterByName(currentSearchQuery);  // применить поиск после перестроения
+        filterByName(currentSearchQuery);
     }
 
     async function fetchExchangeRates() {
@@ -503,7 +505,7 @@
 
     const columns = [
         { group: "ozon", mainTitle: "Фото", paramType: null },
-        { group: "ozon", mainTitle: "Название", paramType: "search" },  // special flag
+        { group: "ozon", mainTitle: "Название", paramType: "search" },
         { group: "ozon", mainTitle: "Категория", paramType: null },
         { group: "ozon", mainTitle: "Ссылка", paramType: null },
         { group: "ozon", mainTitle: "Цена", paramType: null },
@@ -543,7 +545,7 @@
         { group: "wb", mainTitle: "Маржинальность", paramType: null },
         { group: "wb", mainTitle: "Рентабельность", paramType: null },
         { group: "wb", mainTitle: "", paramType: null },
-        { group: "wb", mainTitle: "Мои", paramType: null }
+        { group: "wb", mainTitle: "", paramType: null }  // столбец 41, в шапке будет кнопка сортировки
     ];
 
     function buildHeader() {
@@ -566,7 +568,6 @@
             } else if (i === 1) {
                 th.classList.add('sticky-left');
                 th.style.left = '72px';
-                // Добавляем поле поиска по названию
                 const searchInput = document.createElement('input');
                 searchInput.type = 'text';
                 searchInput.placeholder = 'Поиск...';
@@ -576,11 +577,12 @@
                     filterByName(currentSearchQuery);
                 });
                 th.appendChild(searchInput);
-            } else if (i >= 38 && i <= 40) { // маржа, рентабельность, удаление
+            } else if (i >= 38 && i <= 40) {
                 th.classList.add('sticky-col');
                 th.setAttribute('data-col-index', i);
+            } else if (i === 41) {
+                // пустая ячейка в шапке-1 для столбца "Мои"
             }
-            // для столбца 41 ("Мои") ничего не добавляем
 
             const paramCol = columns.slice(i, i + span).find(c => c.paramType && c.paramId);
             if (paramCol) {
@@ -602,7 +604,7 @@
                 else if (paramCol.paramType === 'rub') wrapper.appendChild(document.createTextNode(' ₽'));
                 else if (paramCol.paramType === 'tariff') wrapper.appendChild(document.createTextNode(' $/кг'));
                 th.appendChild(wrapper);
-            } else if (i !== 1) { // не для названия (там уже есть поиск)
+            } else if (i !== 1 && i !== 41) {
                 th.textContent = '';
             }
             rowParams.appendChild(th);
@@ -611,47 +613,61 @@
         thead.appendChild(rowParams);
 
         const rowNames = document.createElement('tr');
-        const titleCells = [];
         i = 0;
         while (i < columns.length) {
             const currentMain = columns[i].mainTitle;
             let span = 1, j = i + 1;
             while (j < columns.length && columns[j].mainTitle === currentMain) { span++; j++; }
             const th = document.createElement('th');
-            th.textContent = currentMain;
-            if (span > 1) th.colSpan = span;
-            if (columns[i].group === 'ozon') th.classList.add('group-ozon');
-            else if (columns[i].group === '1688') th.classList.add('group-1688');
-            else if (columns[i].group === 'wb') th.classList.add('group-wb');
-            if (i === 3 || i === 17) th.classList.add('link-col');
-
-            if (i === 0) {
-                th.classList.add('sticky-left');
-                th.style.left = '0px';
-            } else if (i === 1) {
-                th.classList.add('sticky-left');
-                th.style.left = '72px';
-            } else if (i === 38 || i === 39 || i === 40) {
-                th.classList.add('sticky-col');
-                th.setAttribute('data-col-index', i);
-            }
-            // для 41 – нет sticky
-
-            if (i === 40) {
+            if (i === 41) {
+                // Кнопка сортировки "Мои"
                 th.innerHTML = '';
                 th.style.textAlign = 'center';
-                const clearBtn = document.createElement('button');
-                clearBtn.className = 'delete-btn';
-                clearBtn.textContent = '🗑️';
-                clearBtn.title = 'Очистить все товары';
-                clearBtn.style.fontSize = '1.2rem';
-                clearBtn.addEventListener('click', (e) => {
+                const sortBtn = document.createElement('button');
+                sortBtn.className = 'sort-btn';
+                sortBtn.innerHTML = '⇅'; // стрелки
+                sortBtn.title = 'Показать "Мои" сверху / снизу';
+                sortBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    clearAllRows();
+                    globalParams.showSoldFirst = !globalParams.showSoldFirst;
+                    saveToStorage();
+                    applyFilter();
                 });
-                th.appendChild(clearBtn);
+                th.appendChild(sortBtn);
+            } else {
+                th.textContent = currentMain;
+                if (span > 1) th.colSpan = span;
+                if (columns[i].group === 'ozon') th.classList.add('group-ozon');
+                else if (columns[i].group === '1688') th.classList.add('group-1688');
+                else if (columns[i].group === 'wb') th.classList.add('group-wb');
+                if (i === 3 || i === 17) th.classList.add('link-col');
+
+                if (i === 0) {
+                    th.classList.add('sticky-left');
+                    th.style.left = '0px';
+                } else if (i === 1) {
+                    th.classList.add('sticky-left');
+                    th.style.left = '72px';
+                } else if (i === 38 || i === 39 || i === 40) {
+                    th.classList.add('sticky-col');
+                    th.setAttribute('data-col-index', i);
+                }
+
+                if (i === 40) {
+                    th.innerHTML = '';
+                    th.style.textAlign = 'center';
+                    const clearBtn = document.createElement('button');
+                    clearBtn.className = 'delete-btn';
+                    clearBtn.textContent = '🗑️';
+                    clearBtn.title = 'Очистить все товары';
+                    clearBtn.style.fontSize = '1.2rem';
+                    clearBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        clearAllRows();
+                    });
+                    th.appendChild(clearBtn);
+                }
             }
-            titleCells.push({th, start: i, end: i + span - 1, span});
             rowNames.appendChild(th);
             i = j;
         }
@@ -664,7 +680,7 @@
         colWidths[1] = 150;
         colWidths[2] = 100;
         colWidths[40] = 46;  // удаление
-        colWidths[41] = 60;  // Мои (ширина чекбокса)
+        colWidths[41] = 50;  // "Мои"
         const linkIndices = [3, 17];
 
         const measureEl = document.createElement('span');
@@ -675,13 +691,14 @@
         measureEl.style.display = 'inline-block';
         document.body.appendChild(measureEl);
 
-        titleCells.forEach(({th, start, end, span}) => {
-            if (start === 0 || start === 1 || start === 2 || linkIndices.includes(start) || start === 40 || start === 41) return;
+        // вычисление ширин для заголовков (кроме закреплённых и спецстолбцов)
+        const rowNamesThs = rowNames.querySelectorAll('th');
+        rowNamesThs.forEach((th, idx) => {
+            if (idx === 0 || idx === 1 || idx === 2 || linkIndices.includes(idx) || idx === 40 || idx === 41) return;
             measureEl.textContent = th.textContent;
             const textWidth = measureEl.offsetWidth + 20;
             const totalWidth = Math.max(textWidth, 100);
-            const perCol = Math.ceil(totalWidth / span);
-            for (let k = start; k <= end; k++) colWidths[k] = perCol;
+            colWidths[idx] = totalWidth;
         });
 
         colWidths.forEach((w, idx) => {
@@ -694,7 +711,6 @@
         table.insertBefore(colgroup, table.firstChild);
 
         // Пересчёт смещений для sticky (без столбца 41)
-        const lastIdx = 40;
         stickyRightOffsets[40] = 0;                     // удаление
         stickyRightOffsets[39] = colWidths[40];          // рентабельность
         stickyRightOffsets[38] = colWidths[40] + colWidths[39];  // маржинальность
@@ -730,7 +746,7 @@
                     td.classList.add('sticky-col');
                     td.style.right = (stickyRightOffsets[j] || 0) + 'px';
                 }
-                // j === 41 – без sticky
+                // j === 41 без sticky
 
                 tr.appendChild(td);
             }
@@ -746,7 +762,6 @@
             const tr = rowsDOM[i];
             if (!tr) continue;
             const r = rowsData[i];
-            // пустые строки (без ссылки) показываем всегда
             if (!r.link) {
                 tr.style.display = '';
                 continue;
@@ -779,7 +794,6 @@
         const nameDiv = createEditableText(r.name, (val) => {
             if (val.length) val = val.charAt(0).toUpperCase() + val.slice(1);
             r.name = val; recalcRow(idx); updateRowDisplay(idx); saveToStorage();
-            // После переименования фильтр не слетит, т.к. он не перестраивает таблицу
         });
         if (r.name) nameDiv.title = r.name;
         cells[1].appendChild(nameDiv);
@@ -1155,12 +1169,6 @@
                 if (input) input.value = globalParams.sppPrices[i] || '';
             }
             sppModal.style.display = 'flex';
-        });
-
-        document.getElementById('myBtn').addEventListener('click', () => {
-            globalParams.showSoldFirst = !globalParams.showSoldFirst;
-            saveToStorage();
-            applyFilter();
         });
     }
 
