@@ -326,23 +326,52 @@
     function formatDollar(v) { return (v === 0 || isNaN(v) || v === null) ? '' : v.toFixed(2) + ' $'; }
 
     function findCommission(categoryShort, price) {
-        if (!categoryShort || !dbRows || dbRows.length === 0) return null;
-        if (price <= 300) return null;
-        let row = dbRows.find(r => r.typeB && r.typeB.toLowerCase() === categoryShort.toLowerCase());
-        if (!row) row = dbRows.find(r => r.typeB && r.typeB.toLowerCase().includes(categoryShort.toLowerCase()));
-        if (!row) row = dbRows.find(r => r.categoryA && r.categoryA.toLowerCase().includes(categoryShort.toLowerCase()));
-        if (!row) return null;
-        let comm = 0;
-        if (price <= 1500) comm = row.commE;
-        else if (price <= 5000) comm = row.commF;
-        else if (price <= 10000) comm = row.commG;
-        else comm = row.commH;
-        if (comm > 0 && comm <= 1) {
-            comm = Math.round(comm * 100);
-        }
-        console.log(`[DB] Найдена комиссия для "${categoryShort}": ${comm}% (цена ${price}₽)`);
-        return comm || null;
+    if (!categoryShort || !dbRows || dbRows.length === 0) return null;
+    if (price <= 300) return null;
+
+    const target = categoryShort.toLowerCase().trim();
+
+    // 1. Ищем точные совпадения по typeB (столбец B)
+    let matches = dbRows.filter(r => r.typeB && r.typeB.toLowerCase().trim() === target);
+
+    // 2. Если точных нет, ищем частичные совпадения (typeB включает искомую строку)
+    if (matches.length === 0) {
+        matches = dbRows.filter(r => r.typeB && r.typeB.toLowerCase().includes(target));
     }
+    if (matches.length === 0) {
+        // Пробуем найти по categoryA (столбец A) – запасной вариант
+        matches = dbRows.filter(r => r.categoryA && r.categoryA.toLowerCase().includes(target));
+    }
+    if (matches.length === 0) return null;
+
+    // 3. Если совпадений больше одного, отсеиваем строки, где categoryA содержит "Благотворительность"
+    let filtered = matches;
+    if (matches.length > 1) {
+        const благотв = 'благотворительность';
+        const withoutCharity = matches.filter(r => !r.categoryA || !r.categoryA.toLowerCase().includes(благотв));
+        if (withoutCharity.length > 0) {
+            filtered = withoutCharity;
+        }
+    }
+
+    // 4. Берём первую подходящую строку из отфильтрованных
+    const row = filtered[0];
+
+    // 5. Выбираем комиссию в зависимости от цены
+    let comm = 0;
+    if (price <= 1500) comm = row.commE;
+    else if (price <= 5000) comm = row.commF;
+    else if (price <= 10000) comm = row.commG;
+    else comm = row.commH;
+
+    // Если Excel отдал долю (0.38 → 38), умножаем на 100
+    if (comm > 0 && comm <= 1) {
+        comm = Math.round(comm * 100);
+    }
+
+    console.log(`[DB] Найдена комиссия для "${categoryShort}": ${comm}% (цена ${price}₽), row:`, row);
+    return comm || null;
+}
 
     function recalcRow(idx) {
         const r = rowsData[idx];
