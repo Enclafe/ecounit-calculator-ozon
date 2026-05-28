@@ -744,9 +744,10 @@
         document.body.removeChild(measureEl);
         table.insertBefore(colgroup, table.firstChild);
 
-        stickyRightOffsets[40] = 0;
-        stickyRightOffsets[39] = colWidths[40];
-        stickyRightOffsets[38] = colWidths[40] + colWidths[39];
+        // Правильные смещения для правых закреплённых столбцов
+        stickyRightOffsets[40] = 0; // Корзина
+        stickyRightOffsets[39] = colWidths[40]; // Рентабельность = ширина Корзины
+        stickyRightOffsets[38] = colWidths[40] + colWidths[39]; // Маржинальность = ширина Корзины + Рентабельности
 
         document.querySelectorAll('.sticky-col[data-col-index]').forEach(th => {
             const idx = parseInt(th.getAttribute('data-col-index'), 10);
