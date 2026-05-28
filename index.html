@@ -45,6 +45,7 @@
             text-overflow: ellipsis;
             box-sizing: border-box;
         }
+        /* Шапка-2 (названия) – без position: sticky */
         .data-table th {
             background-color: #f1f3f4; font-weight: 600;
             border-bottom: 3px solid #ccc;
@@ -52,44 +53,20 @@
             line-height: 36px;
             text-align: center !important;
         }
+        /* Шапка-1 (параметры) */
         .param-row th {
             background-color: #f8f9fa;
             font-weight: normal;
             color: #333;
         }
 
-        /* Скрытие столбцов 7–37 (Эквайринг … Налог) */
+        /* Скрываемые столбцы (7 – Эквайринг … 36 – Налог) */
         .data-table.collapsed .collapsible-col,
         .data-table.collapsed .collapsible-cell {
             display: none;
         }
 
-        /* При сворачивании расширяем название, а не ссылку */
-        .data-table.collapsed th:nth-child(2),
-        .data-table.collapsed td:nth-child(2) {
-            width: auto !important;
-            min-width: 150px !important;
-            max-width: none !important;
-        }
-        .data-table.collapsed th.link-col:nth-child(4),
-        .data-table.collapsed td.link-col:nth-child(4),
-        .data-table.collapsed th.link-col:nth-child(18),
-        .data-table.collapsed td.link-col:nth-child(18) {
-            width: 80px !important;
-            min-width: 80px !important;
-            max-width: 80px !important;
-        }
-
-        /* Остальные стили (как в стабильной версии) */
-        .row-red td:last-child { background-color: #ffcccc !important; }
-        .data-table th:nth-child(2), .data-table th:nth-child(3), .data-table th.link-col {
-            text-align: center !important;
-        }
-        .data-table td:nth-child(2), .data-table td:nth-child(3), .data-table td.link-col {
-            text-align: left !important;
-        }
-        .data-table th:nth-child(3),
-        .data-table td:nth-child(3) { text-align: center !important; }
+        /* Базовые ширины колонок */
         .data-table th:first-child, .data-table td:first-child {
             width: 72px !important; min-width: 72px !important; max-width: 72px !important;
             text-align: center; padding: 0;
@@ -106,6 +83,31 @@
         .data-table th.link-col, .data-table td.link-col {
             min-width: 60px !important; max-width: 80px !important;
         }
+
+        /* В свернутом состоянии увеличиваем Название и Категорию */
+        .data-table.collapsed th:nth-child(2),
+        .data-table.collapsed td:nth-child(2) {
+            width: 350px !important;
+            min-width: 350px !important;
+            max-width: 350px !important;
+        }
+        .data-table.collapsed th:nth-child(3),
+        .data-table.collapsed td:nth-child(3) {
+            width: 150px !important;
+            min-width: 150px !important;
+            max-width: 150px !important;
+        }
+
+        /* Остальные стили */
+        .row-red td:last-child { background-color: #ffcccc !important; }
+        .data-table th:nth-child(2), .data-table th:nth-child(3), .data-table th.link-col {
+            text-align: center !important;
+        }
+        .data-table td:nth-child(2), .data-table td:nth-child(3), .data-table td.link-col {
+            text-align: left !important;
+        }
+        .data-table th:nth-child(3),
+        .data-table td:nth-child(3) { text-align: center !important; }
         .group-ozon { background-color: #005bff !important; color: white; }
         .group-1688 { background-color: #ff5b00 !important; color: white; }
         .group-wb { background-color: #e93acd !important; color: white; }
@@ -198,9 +200,11 @@
 
     let dbRows = [];
     let currentSearchQuery = '';
-
-    // Состояние сворачивания
     let collapsed = false;
+
+    // Диапазон скрываемых столбцов (7 – Эквайринг … 36 – Налог)
+    const COLLAPSE_START = 7;
+    const COLLAPSE_END = 36;
 
     function saveDbToStorage() { localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(dbRows)); }
     function loadDbFromStorage() {
@@ -544,10 +548,6 @@
         { group: "wb", mainTitle: "Мои", paramType: null }
     ];
 
-    // Индексы столбцов, которые можно свернуть (7 – Эквайринг, 37 – Налог)
-    const COLLAPSE_START = 7;
-    const COLLAPSE_END = 37;
-
     function buildHeader() {
         const thead = document.getElementById('tableHeader');
         thead.innerHTML = '';
@@ -563,7 +563,6 @@
             th.style.backgroundColor = '#f8f9fa';
             if (span > 1) th.colSpan = span;
 
-            // Класс для скрываемых столбцов
             if (i >= COLLAPSE_START && i <= COLLAPSE_END) {
                 th.classList.add('collapsible-cell');
             }
@@ -625,7 +624,6 @@
             else if (columns[i].group === 'wb') th.classList.add('group-wb');
             if (i === 3 || i === 17) th.classList.add('link-col');
 
-            // Класс для скрываемых столбцов
             if (i >= COLLAPSE_START && i <= COLLAPSE_END) {
                 th.classList.add('collapsible-cell');
             }
@@ -697,7 +695,6 @@
             const col = document.createElement('col');
             if (linkIndices.includes(idx)) col.style.width = 'auto';
             else col.style.width = w + 'px';
-            // Добавляем класс для скрываемых столбцов
             if (idx >= COLLAPSE_START && idx <= COLLAPSE_END) {
                 col.classList.add('collapsible-col');
             }
@@ -727,7 +724,6 @@
             for (let j = 0; j < columns.length; j++) {
                 const td = document.createElement('td');
                 if (j === 3 || j === 17) td.classList.add('link-col');
-                // Класс для скрываемых столбцов
                 if (j >= COLLAPSE_START && j <= COLLAPSE_END) {
                     td.classList.add('collapsible-cell');
                 }
