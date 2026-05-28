@@ -45,61 +45,23 @@
             text-overflow: ellipsis;
             box-sizing: border-box;
         }
-        /* Шапка‑2 (названия) */
+        /* Шапка-2 (названия) – без position: sticky */
         .data-table th {
             background-color: #f1f3f4; font-weight: 600;
-            position: sticky; top: 0; z-index: 30;
             border-bottom: 3px solid #ccc;
             height: 36px;
             line-height: 36px;
             text-align: center !important;
         }
-        /* Шапка‑1 (параметры) */
+        /* Шапка-1 (параметры) */
         .param-row th {
-            z-index: 1;
             background-color: #f8f9fa;
             font-weight: normal;
             color: #333;
         }
-        .data-table td { z-index: 10; }
+        .data-table td { }
 
-        /* ===== ЗАКРЕПЛЕНИЕ СТОЛБЦОВ ===== */
-        /* Левая группа (фото, название) */
-        .sticky-left {
-            position: sticky;
-            background-color: #fff;
-            z-index: 20;
-        }
-        .data-table th.sticky-left {
-            z-index: 35;
-            top: 0;
-        }
-        /* Правая группа (маржинальность, рентабельность, удаление) */
-        .sticky-right {
-            position: sticky;
-            background-color: #fff;
-            z-index: 20;
-        }
-        .data-table th.sticky-right {
-            z-index: 35;
-            top: 0;
-        }
-
-        /* Тени‑разделители как в Google Таблицах */
-        .data-table td.sticky-left:nth-child(2),
-        .data-table th.sticky-left:nth-child(2) {
-            box-shadow: 2px 0 5px -2px rgba(0,0,0,0.3);
-        }
-        .data-table td.sticky-right:nth-child(40),
-        .data-table th.sticky-right:nth-child(40) {
-            box-shadow: -2px 0 5px -2px rgba(0,0,0,0.3);
-        }
-
-        /* Прозрачность для param-row в закреплённых столбцах */
-        .param-row th.sticky-left,
-        .param-row th.sticky-right {
-            background-color: transparent !important;
-        }
+        /* Без каких-либо sticky-правил */
 
         /* Остальные стили (как в стабильной версии) */
         .row-red td:last-child { background-color: #ffcccc !important; }
@@ -200,7 +162,7 @@
 <div class="footer">© 2026 EGOR SH. Все права защищены.</div>
 
 <script>
-    // ========== Глобальные параметры (без изменений) ==========
+    // ========== Глобальные параметры ==========
     let globalParams = {
         ekvairingPercent: 0, crossDockingPercent: 0, logisticPercent: 5,
         lastMilePercent: 0, returnsPercent: 0, usdRate: 90, usdRateMarkup: 8,
@@ -217,8 +179,6 @@
     const DB_STORAGE_KEY = 'ecounit_db';
 
     let dbRows = [];
-    let stickyRightOffsets = {};
-    let stickyLeftOffsets = {};
     let currentSearchQuery = '';
 
     function saveDbToStorage() { localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(dbRows)); }
@@ -578,16 +538,6 @@
             th.style.backgroundColor = '#f8f9fa';
             if (span > 1) th.colSpan = span;
 
-            // Классы для закрепления
-            if (i === 0 || i === 1) {
-                th.classList.add('sticky-left');
-                th.setAttribute('data-col-index', i);
-            } else if (i === 38 || i === 39 || i === 40) {
-                th.classList.add('sticky-right');
-                th.setAttribute('data-col-index', i);
-            }
-
-            // Поле поиска в столбце "Название" (индекс 1)
             if (i === 1) {
                 const searchInput = document.createElement('input');
                 searchInput.type = 'text';
@@ -645,16 +595,6 @@
             else if (columns[i].group === 'wb') th.classList.add('group-wb');
             if (i === 3 || i === 17) th.classList.add('link-col');
 
-            // Классы для закрепления
-            if (i === 0 || i === 1) {
-                th.classList.add('sticky-left');
-                th.setAttribute('data-col-index', i);
-            } else if (i === 38 || i === 39 || i === 40) {
-                th.classList.add('sticky-right');
-                th.setAttribute('data-col-index', i);
-            }
-
-            // Кнопка очистки в столбце удаления (индекс 40)
             if (i === 40) {
                 th.innerHTML = '';
                 th.style.textAlign = 'center';
@@ -670,7 +610,6 @@
                 th.appendChild(clearBtn);
             }
 
-            // Кнопка сортировки в столбце "Мои" (индекс 41)
             if (i === 41) {
                 th.innerHTML = '';
                 th.style.textAlign = 'center';
@@ -710,7 +649,6 @@
         measureEl.style.display = 'inline-block';
         document.body.appendChild(measureEl);
 
-        // Измеряем ширину текста для незакреплённых столбцов
         const rowNamesThs = rowNames.querySelectorAll('th');
         rowNamesThs.forEach((th, idx) => {
             if (idx === 0 || idx === 1 || idx === 2 || linkIndices.includes(idx) || idx === 40 || idx === 41) return;
@@ -728,24 +666,6 @@
         });
         document.body.removeChild(measureEl);
         table.insertBefore(colgroup, table.firstChild);
-
-        // Рассчитываем смещения для закреплённых столбцов
-        stickyLeftOffsets[0] = 0;
-        stickyLeftOffsets[1] = colWidths[0];
-
-        stickyRightOffsets[40] = 0;
-        stickyRightOffsets[39] = colWidths[40];
-        stickyRightOffsets[38] = colWidths[40] + colWidths[39];
-
-        // Применяем смещения ко всем элементам с классами sticky (и th, и td)
-        document.querySelectorAll('.sticky-left, .sticky-right').forEach(el => {
-            const colIndex = parseInt(el.getAttribute('data-col-index') || el.cellIndex, 10);
-            if (el.classList.contains('sticky-left') && stickyLeftOffsets[colIndex] !== undefined) {
-                el.style.left = stickyLeftOffsets[colIndex] + 'px';
-            } else if (el.classList.contains('sticky-right') && stickyRightOffsets[colIndex] !== undefined) {
-                el.style.right = stickyRightOffsets[colIndex] + 'px';
-            }
-        });
     }
 
     let rowsDOM = [];
@@ -760,15 +680,6 @@
             for (let j = 0; j < columns.length; j++) {
                 const td = document.createElement('td');
                 if (j === 3 || j === 17) td.classList.add('link-col');
-
-                if (j === 0 || j === 1) {
-                    td.classList.add('sticky-left');
-                    td.style.left = (stickyLeftOffsets[j] || 0) + 'px';
-                } else if (j === 38 || j === 39 || j === 40) {
-                    td.classList.add('sticky-right');
-                    td.style.right = (stickyRightOffsets[j] || 0) + 'px';
-                }
-
                 tr.appendChild(td);
             }
             tbody.appendChild(tr);
@@ -942,7 +853,7 @@
         else tr.classList.remove('row-red');
     }
 
-    // ========== Вспомогательные функции (без изменений) ==========
+    // ========== Вспомогательные функции ==========
     function createEditableNumber(value, onSave, showZero = false) {
         const div = document.createElement('div'); div.className = 'editable-cell';
         const displayVal = (value === 0 && showZero) ? '0' : ((value === 0 || value === null || value === '') ? '' : value);
