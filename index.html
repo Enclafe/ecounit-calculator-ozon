@@ -97,7 +97,7 @@
         .data-table th.sticky-right:nth-child(40) {
             box-shadow: -2px 0 5px -2px rgba(0,0,0,0.3);
         }
-        /* Прозрачность для param-row в закреплённых столбцах (чтобы не перекрывали) */
+        /* Прозрачность для param-row в закреплённых столбцах */
         .param-row th.sticky-left,
         .param-row th.sticky-right {
             background-color: transparent !important;
@@ -220,7 +220,7 @@
 
     let dbRows = [];
     let stickyRightOffsets = {};
-    let stickyLeftOffsets = {};    // новые смещения для левых столбцов
+    let stickyLeftOffsets = {};
     let currentSearchQuery = '';
 
     function saveDbToStorage() { localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(dbRows)); }
@@ -228,7 +228,7 @@
         const saved = localStorage.getItem(DB_STORAGE_KEY);
         if (saved) { try { dbRows = JSON.parse(saved); } catch (e) {} }
     }
-    function parseExcel(file) { /* без изменений */
+    function parseExcel(file) {
         const reader = new FileReader();
         reader.onload = function(e) {
             const data = new Uint8Array(e.target.result);
@@ -258,7 +258,7 @@
         reader.readAsArrayBuffer(file);
     }
 
-    function saveToStorage() { /* без изменений */
+    function saveToStorage() {
         const data = {
             globalParams: globalParams,
             rows: rowsData.map(row => ({
@@ -274,7 +274,7 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
 
-    function loadFromStorage() { /* без изменений */
+    function loadFromStorage() {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (!saved) return false;
         try {
@@ -297,7 +297,7 @@
         } catch (e) { console.warn('Ошибка загрузки', e); return false; }
     }
 
-    function initRows() { /* без изменений */
+    function initRows() {
         rowsData = [];
         for (let i = 0; i < ROWS; i++) {
             rowsData.push({
@@ -314,7 +314,7 @@
         }
     }
 
-    function applyFilter() { /* без изменений */
+    function applyFilter() {
         rowsData.sort((a, b) => {
             const aEmpty = !a.link;
             const bEmpty = !b.link;
@@ -335,7 +335,7 @@
         filterByName(currentSearchQuery);
     }
 
-    async function fetchExchangeRates() { /* без изменений */
+    async function fetchExchangeRates() {
         try {
             const res = await fetch('https://www.cbr-xml-daily.ru/daily_json.js');
             const data = await res.json();
@@ -349,7 +349,7 @@
     function formatPercent(v) { return (v === 0 || isNaN(v) || v === null) ? '' : v + ' %'; }
     function formatDollar(v) { return (v === 0 || isNaN(v) || v === null) ? '' : v.toFixed(2) + ' $'; }
 
-    function findCommission(categoryShort, price) { /* без изменений */
+    function findCommission(categoryShort, price) {
         if (!categoryShort || !dbRows || dbRows.length === 0) return null;
         if (price <= 300) return null;
         const target = categoryShort.toLowerCase().trim();
@@ -377,7 +377,7 @@
         return comm || null;
     }
 
-    function recalcRow(idx) { /* без изменений */
+    function recalcRow(idx) {
         const r = rowsData[idx];
         const price = parseFloat(r.price) || 0;
         if (!price) {
@@ -435,7 +435,7 @@
         for (let i = 0; i < ROWS; i++) if (rowsDOM[i]) updateRowDisplay(i);
     }
 
-    window.addItemFromExtension = function(item) { /* без изменений */
+    window.addItemFromExtension = function(item) {
         const cleanPrice = String(item.price || '').replace(/\s/g, '').replace(',', '.');
         let numericPrice = parseFloat(cleanPrice) || 0;
         if (globalParams.sppDiscount > 0 && numericPrice > 0) {
@@ -462,7 +462,7 @@
         saveToStorage();
     };
 
-    window.updateWeightsFromCart = function(products) { /* без изменений */
+    window.updateWeightsFromCart = function(products) {
         products.forEach(product => {
             const row = rowsData.find(r => r.name && r.name.trim().toLowerCase() === product.name.trim().toLowerCase());
             if (row) {
@@ -475,7 +475,7 @@
         saveToStorage();
     };
 
-    window.addEventListener('message', function(event) { /* без изменений */
+    window.addEventListener('message', function(event) {
         if (event.data && event.data.type === 'ECOUNIT_ADD_ITEM') {
             if (typeof window.addItemFromExtension === 'function') window.addItemFromExtension(event.data.item);
         }
@@ -484,7 +484,7 @@
         }
     });
 
-    function deleteRow(idx) { /* без изменений */
+    function deleteRow(idx) {
         for (let i = idx; i < ROWS - 1; i++) Object.assign(rowsData[i], rowsData[i + 1]);
         Object.assign(rowsData[ROWS - 1], createEmptyRow());
         rowsData[ROWS - 1].id = ROWS - 1;
@@ -495,7 +495,7 @@
         saveToStorage();
     }
 
-    function clearAllRows() { /* без изменений */
+    function clearAllRows() {
         if (!confirm('Удалить ВСЕ товары?')) return;
         for (let i = 0; i < ROWS; i++) {
             Object.assign(rowsData[i], createEmptyRow());
@@ -506,7 +506,7 @@
         saveToStorage();
     }
 
-    function createEmptyRow() { /* без изменений */
+    function createEmptyRow() {
         return {
             id: -1, photo: '', name: '', category: '', link: '', price: 0,
             commissionManual: null, commissionLeftValue: 0, commissionRub: 0,
@@ -580,14 +580,30 @@
             th.style.backgroundColor = '#f8f9fa';
             if (span > 1) th.colSpan = span;
 
-            // Назначаем классы для закрепления (только для тех, которые должны закрепляться)
-            if (i === 0) {
-                th.classList.add('sticky-left');
-            } else if (i === 1) {
-                th.classList.add('sticky-left');
-                // поле поиска добавляем позже
-            } else if (i === 38 || i === 39 || i === 40) {
-                th.classList.add('sticky-right');
+            // Классы и data-атрибуты для закрепления
+            if (i === 0 || i === 1 || i === 38 || i === 39 || i === 40) {
+                th.setAttribute('data-col-index', i);
+                if (i === 0 || i === 1) {
+                    th.classList.add('sticky-left');
+                } else {
+                    th.classList.add('sticky-right');
+                }
+            }
+
+            // Поле поиска в столбце "Название" (индекс 1)
+            if (i === 1) {
+                const searchInput = document.createElement('input');
+                searchInput.type = 'text';
+                searchInput.placeholder = 'Поиск...';
+                searchInput.style.cssText = 'width:100%; padding:2px 4px; border:1px solid #ccc; border-radius:3px; font-size:0.7rem;';
+                searchInput.addEventListener('input', function(e) {
+                    currentSearchQuery = e.target.value;
+                    filterByName(currentSearchQuery);
+                });
+                th.appendChild(searchInput);
+                rowParams.appendChild(th);
+                i += span;
+                continue;
             }
 
             const paramCol = columns.slice(i, i + span).find(c => c.paramType && c.paramId);
@@ -619,7 +635,6 @@
         thead.appendChild(rowParams);
 
         const rowNames = document.createElement('tr');
-        const titleCells = [];
         i = 0;
         while (i < columns.length) {
             const currentMain = columns[i].mainTitle;
@@ -633,14 +648,14 @@
             else if (columns[i].group === 'wb') th.classList.add('group-wb');
             if (i === 3 || i === 17) th.classList.add('link-col');
 
-            // Назначаем классы закрепления
-            if (i === 0) {
-                th.classList.add('sticky-left');
-            } else if (i === 1) {
-                th.classList.add('sticky-left');
-                // Поле поиска вставим позже
-            } else if (i === 38 || i === 39 || i === 40) {
-                th.classList.add('sticky-right');
+            // Классы и data-атрибуты для закрепления
+            if (i === 0 || i === 1 || i === 38 || i === 39 || i === 40) {
+                th.setAttribute('data-col-index', i);
+                if (i === 0 || i === 1) {
+                    th.classList.add('sticky-left');
+                } else {
+                    th.classList.add('sticky-right');
+                }
             }
 
             // Кнопка очистки в столбце удаления (индекс 40)
@@ -676,25 +691,10 @@
                 th.appendChild(sortBtn);
             }
 
-            titleCells.push({th, start: i, end: i + span - 1, span});
             rowNames.appendChild(th);
             i = j;
         }
         thead.appendChild(rowNames);
-
-        // Добавляем поле поиска в столбец "Название" (индекс 1)
-        const searchTh = rowNames.querySelectorAll('th')[1];
-        if (searchTh) {
-            const searchInput = document.createElement('input');
-            searchInput.type = 'text';
-            searchInput.placeholder = 'Поиск...';
-            searchInput.style.cssText = 'width:100%; padding:2px 4px; border:1px solid #ccc; border-radius:3px; font-size:0.7rem;';
-            searchInput.addEventListener('input', function(e) {
-                currentSearchQuery = e.target.value;
-                filterByName(currentSearchQuery);
-            });
-            searchTh.appendChild(searchInput);
-        }
 
         const table = document.getElementById('mainTable');
         const colgroup = document.createElement('colgroup');
@@ -702,8 +702,8 @@
         colWidths[0] = 72;
         colWidths[1] = 150;
         colWidths[2] = 100;
-        colWidths[40] = 46;  // удаление
-        colWidths[41] = 50;  // Мои
+        colWidths[40] = 46;
+        colWidths[41] = 50;
         const linkIndices = [3, 17];
 
         const measureEl = document.createElement('span');
@@ -714,13 +714,14 @@
         measureEl.style.display = 'inline-block';
         document.body.appendChild(measureEl);
 
-        titleCells.forEach(({th, start, end, span}) => {
-            if (start === 0 || start === 1 || start === 2 || linkIndices.includes(start) || start === 40 || start === 41) return;
+        // Измеряем ширину текста для незакреплённых столбцов
+        const rowNamesThs = rowNames.querySelectorAll('th');
+        rowNamesThs.forEach((th, idx) => {
+            if (idx === 0 || idx === 1 || idx === 2 || linkIndices.includes(idx) || idx === 40 || idx === 41) return;
             measureEl.textContent = th.textContent;
             const textWidth = measureEl.offsetWidth + 20;
             const totalWidth = Math.max(textWidth, 100);
-            const perCol = Math.ceil(totalWidth / span);
-            for (let k = start; k <= end; k++) colWidths[k] = perCol;
+            colWidths[idx] = totalWidth;
         });
 
         colWidths.forEach((w, idx) => {
@@ -733,25 +734,19 @@
         table.insertBefore(colgroup, table.firstChild);
 
         // Рассчитываем смещения для закреплённых столбцов
-        // Левые: фото (0) left:0, название (1) left = ширина фото (colWidths[0])
         stickyLeftOffsets[0] = 0;
         stickyLeftOffsets[1] = colWidths[0];
 
-        // Правые: удаление (40) right:0, рентабельность (39) right = ширина удаления, маржинальность (38) right = ширина удаления + рентабельности
         stickyRightOffsets[40] = 0;
         stickyRightOffsets[39] = colWidths[40];
         stickyRightOffsets[38] = colWidths[40] + colWidths[39];
 
-        // Применяем смещения к элементам
-        document.querySelectorAll('.sticky-left').forEach(el => {
+        // Применяем смещения ко всем элементам с классами sticky
+        document.querySelectorAll('.sticky-left, .sticky-right').forEach(el => {
             const colIndex = parseInt(el.getAttribute('data-col-index') || el.cellIndex, 10);
-            if (stickyLeftOffsets[colIndex] !== undefined) {
+            if (el.classList.contains('sticky-left') && stickyLeftOffsets[colIndex] !== undefined) {
                 el.style.left = stickyLeftOffsets[colIndex] + 'px';
-            }
-        });
-        document.querySelectorAll('.sticky-right').forEach(el => {
-            const colIndex = parseInt(el.getAttribute('data-col-index') || el.cellIndex, 10);
-            if (stickyRightOffsets[colIndex] !== undefined) {
+            } else if (el.classList.contains('sticky-right') && stickyRightOffsets[colIndex] !== undefined) {
                 el.style.right = stickyRightOffsets[colIndex] + 'px';
             }
         });
@@ -770,7 +765,6 @@
                 const td = document.createElement('td');
                 if (j === 3 || j === 17) td.classList.add('link-col');
 
-                // Назначаем классы закрепления
                 if (j === 0 || j === 1) {
                     td.classList.add('sticky-left');
                     td.style.left = (stickyLeftOffsets[j] || 0) + 'px';
@@ -787,7 +781,7 @@
         for (let i = 0; i < ROWS; i++) updateRowDisplay(i);
     }
 
-    function filterByName(query) { /* без изменений */
+    function filterByName(query) {
         const q = query.toLowerCase().trim();
         for (let i = 0; i < rowsDOM.length; i++) {
             const tr = rowsDOM[i];
@@ -809,15 +803,11 @@
     function getMarginColor(v) { return v < 8 ? '#ffcccc' : v <= 15 ? '#fff2cc' : v <= 22 ? '#b7e1cd' : '#8ed6b3'; }
     function getRentColor(v) { return v < 30 ? '#ffcccc' : v <= 70 ? '#fff2cc' : v <= 100 ? '#b7e1cd' : '#8ed6b3'; }
 
-    function updateRowDisplay(idx) { /* без изменений, только добавил принудительное обновление left/right для sticky (на всякий случай) */
+    function updateRowDisplay(idx) {
         const tr = rowsDOM[idx]; if (!tr) return;
         const r = rowsData[idx], cells = tr.cells;
         const showDefault = r.showDefaultValues === true;
 
-        // ... (весь существующий код updateRowDisplay без изменений)
-        // В конце функции можно оставить как было.
-        // Для краткости я не дублирую весь updateRowDisplay, он остаётся точно таким же, как в стабильной версии.
-        // Ниже приведена полная функция, идентичная стабильной версии.
         cells[0].innerHTML = '';
         if (r.photo) {
             const img = document.createElement('img');
