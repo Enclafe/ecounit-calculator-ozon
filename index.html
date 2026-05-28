@@ -58,7 +58,7 @@
             color: #333;
         }
 
-        /* Скрытие столбцов 7–37 (Эквайринг … Налог) */
+        /* Скрываемые столбцы: 7 (Эквайринг) – 36 (Налог) */
         .data-table.collapsed .collapsible-col,
         .data-table.collapsed .collapsible-cell {
             display: none;
@@ -199,8 +199,11 @@
     let dbRows = [];
     let currentSearchQuery = '';
 
-    // Состояние сворачивания
     let collapsed = false;
+
+    // Диапазон скрываемых столбцов: 7 (Эквайринг) .. 36 (Налог)
+    const COLLAPSE_START = 7;
+    const COLLAPSE_END = 36;
 
     function saveDbToStorage() { localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(dbRows)); }
     function loadDbFromStorage() {
@@ -544,10 +547,6 @@
         { group: "wb", mainTitle: "Мои", paramType: null }
     ];
 
-    // Индексы столбцов, которые можно свернуть (7 – Эквайринг, 37 – Налог)
-    const COLLAPSE_START = 7;
-    const COLLAPSE_END = 37;
-
     function buildHeader() {
         const thead = document.getElementById('tableHeader');
         thead.innerHTML = '';
@@ -686,18 +685,17 @@
 
         const rowNamesThs = rowNames.querySelectorAll('th');
         rowNamesThs.forEach((th, idx) => {
-            if (idx === 0 || idx === 1 || idx === 2 || linkIndices.includes(idx) || idx === 40 || idx === 41) return;
+            // Исключаем столбцы с фиксированной шириной и скрываемые
+            if (idx === 0 || idx === 1 || idx === 2 || linkIndices.includes(idx) || idx === 40 || idx === 41 || (idx >= COLLAPSE_START && idx <= COLLAPSE_END)) return;
             measureEl.textContent = th.textContent;
             const textWidth = measureEl.offsetWidth + 20;
-            const totalWidth = Math.max(textWidth, 100);
-            colWidths[idx] = totalWidth;
+            colWidths[idx] = textWidth;
         });
 
         colWidths.forEach((w, idx) => {
             const col = document.createElement('col');
             if (linkIndices.includes(idx)) col.style.width = 'auto';
             else col.style.width = w + 'px';
-            // Добавляем класс для скрываемых столбцов
             if (idx >= COLLAPSE_START && idx <= COLLAPSE_END) {
                 col.classList.add('collapsible-col');
             }
@@ -727,7 +725,6 @@
             for (let j = 0; j < columns.length; j++) {
                 const td = document.createElement('td');
                 if (j === 3 || j === 17) td.classList.add('link-col');
-                // Класс для скрываемых столбцов
                 if (j >= COLLAPSE_START && j <= COLLAPSE_END) {
                     td.classList.add('collapsible-cell');
                 }
@@ -737,7 +734,6 @@
             rowsDOM.push(tr);
         }
         for (let i = 0; i < ROWS; i++) updateRowDisplay(i);
-        // Синхронизируем состояние сворачивания
         if (collapsed) {
             table.classList.add('collapsed');
         } else {
