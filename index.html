@@ -58,26 +58,24 @@
             color: #333;
         }
 
-        /* Скрываемые столбцы: 7 (Эквайринг) – 36 (Налог) */
+        /* Скрываемые столбцы (7 – Эквайринг … 38 – Чистая прибыль) */
         .data-table.collapsed .collapsible-col,
         .data-table.collapsed .collapsible-cell {
             display: none;
         }
 
-        /* При сворачивании расширяем название, а не ссылку */
+        /* В свернутом виде расширяем Название и Категорию */
         .data-table.collapsed th:nth-child(2),
         .data-table.collapsed td:nth-child(2) {
-            width: auto !important;
-            min-width: 150px !important;
-            max-width: none !important;
+            width: 350px !important;
+            min-width: 350px !important;
+            max-width: 350px !important;
         }
-        .data-table.collapsed th.link-col:nth-child(4),
-        .data-table.collapsed td.link-col:nth-child(4),
-        .data-table.collapsed th.link-col:nth-child(18),
-        .data-table.collapsed td.link-col:nth-child(18) {
-            width: 80px !important;
-            min-width: 80px !important;
-            max-width: 80px !important;
+        .data-table.collapsed th:nth-child(3),
+        .data-table.collapsed td:nth-child(3) {
+            width: 150px !important;
+            min-width: 150px !important;
+            max-width: 150px !important;
         }
 
         /* Остальные стили (как в стабильной версии) */
@@ -199,11 +197,8 @@
     let dbRows = [];
     let currentSearchQuery = '';
 
+    // Состояние сворачивания
     let collapsed = false;
-
-    // Диапазон скрываемых столбцов: 7 (Эквайринг) .. 36 (Налог)
-    const COLLAPSE_START = 7;
-    const COLLAPSE_END = 36;
 
     function saveDbToStorage() { localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(dbRows)); }
     function loadDbFromStorage() {
@@ -547,6 +542,10 @@
         { group: "wb", mainTitle: "Мои", paramType: null }
     ];
 
+    // Индексы столбцов, которые можно свернуть (7 – Эквайринг … 38 – Чистая прибыль)
+    const COLLAPSE_START = 7;
+    const COLLAPSE_END = 38;
+
     function buildHeader() {
         const thead = document.getElementById('tableHeader');
         thead.innerHTML = '';
@@ -611,6 +610,7 @@
         thead.appendChild(rowParams);
 
         const rowNames = document.createElement('tr');
+        const titleCells = [];
         i = 0;
         while (i < columns.length) {
             const currentMain = columns[i].mainTitle;
@@ -660,6 +660,7 @@
                 th.appendChild(sortBtn);
             }
 
+            titleCells.push({th, start: i, end: j - 1, span}); // сохраняем диапазон
             rowNames.appendChild(th);
             i = j;
         }
@@ -683,19 +684,24 @@
         measureEl.style.display = 'inline-block';
         document.body.appendChild(measureEl);
 
-        const rowNamesThs = rowNames.querySelectorAll('th');
-        rowNamesThs.forEach((th, idx) => {
-            // Исключаем столбцы с фиксированной шириной и скрываемые
-            if (idx === 0 || idx === 1 || idx === 2 || linkIndices.includes(idx) || idx === 40 || idx === 41 || (idx >= COLLAPSE_START && idx <= COLLAPSE_END)) return;
+        // Вычисляем ширину строго как ширина текста заголовка + 20px с учётом span
+        titleCells.forEach(({th, start, end, span}) => {
+            if (start === 0 || start === 1 || start === 2 || linkIndices.includes(start) || start === 40 || start === 41) return;
             measureEl.textContent = th.textContent;
             const textWidth = measureEl.offsetWidth + 20;
-            colWidths[idx] = textWidth;
+            const totalWidth = Math.max(textWidth, 100); // минимальная ширина 100px
+            // Распределяем ширину равномерно между колонками в span
+            const perCol = Math.ceil(totalWidth / span);
+            for (let k = start; k <= end; k++) {
+                colWidths[k] = perCol;
+            }
         });
 
         colWidths.forEach((w, idx) => {
             const col = document.createElement('col');
             if (linkIndices.includes(idx)) col.style.width = 'auto';
             else col.style.width = w + 'px';
+            // Добавляем класс для скрываемых столбцов
             if (idx >= COLLAPSE_START && idx <= COLLAPSE_END) {
                 col.classList.add('collapsible-col');
             }
@@ -725,6 +731,7 @@
             for (let j = 0; j < columns.length; j++) {
                 const td = document.createElement('td');
                 if (j === 3 || j === 17) td.classList.add('link-col');
+                // Класс для скрываемых столбцов
                 if (j >= COLLAPSE_START && j <= COLLAPSE_END) {
                     td.classList.add('collapsible-cell');
                 }
@@ -734,6 +741,7 @@
             rowsDOM.push(tr);
         }
         for (let i = 0; i < ROWS; i++) updateRowDisplay(i);
+        // Синхронизируем состояние сворачивания
         if (collapsed) {
             table.classList.add('collapsed');
         } else {
