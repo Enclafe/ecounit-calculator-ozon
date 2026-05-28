@@ -58,27 +58,21 @@
             color: #333;
         }
 
-        /* Скрываемые столбцы (7 – Эквайринг … 36 – Прибыль) */
+        /* Скрываемые столбцы (7 – Эквайринг … 36 – Налог) */
         .data-table.collapsed .collapsible-col,
         .data-table.collapsed .collapsible-cell {
             display: none;
         }
 
-        /* В свернутом виде расширяем Название и Категорию */
+        /* В свернутом виде расширяем только Название */
         .data-table.collapsed th:nth-child(2),
         .data-table.collapsed td:nth-child(2) {
             width: 350px !important;
             min-width: 350px !important;
             max-width: 350px !important;
         }
-        .data-table.collapsed th:nth-child(3),
-        .data-table.collapsed td:nth-child(3) {
-            width: 150px !important;
-            min-width: 150px !important;
-            max-width: 150px !important;
-        }
 
-        /* Остальные стили */
+        /* Остальные стили (как в стабильной версии) */
         .row-red td:last-child { background-color: #ffcccc !important; }
         .data-table th:nth-child(2), .data-table th:nth-child(3), .data-table th.link-col {
             text-align: center !important;
@@ -196,11 +190,9 @@
 
     let dbRows = [];
     let currentSearchQuery = '';
-    let collapsed = false;
 
-    // Диапазон скрываемых столбцов (7 – Эквайринг … 36 – Прибыль)
-    const COLLAPSE_START = 7;
-    const COLLAPSE_END = 36;
+    // Состояние сворачивания
+    let collapsed = false;
 
     function saveDbToStorage() { localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(dbRows)); }
     function loadDbFromStorage() {
@@ -544,6 +536,10 @@
         { group: "wb", mainTitle: "Мои", paramType: null }
     ];
 
+    // Индексы столбцов, которые можно свернуть (7 – Эквайринг … 36 – Налог)
+    const COLLAPSE_START = 7;
+    const COLLAPSE_END = 36;
+
     function buildHeader() {
         const thead = document.getElementById('tableHeader');
         thead.innerHTML = '';
@@ -658,7 +654,7 @@
                 th.appendChild(sortBtn);
             }
 
-            titleCells.push({th, start: i, end: j - 1, span});
+            titleCells.push({th, start: i, end: j - 1, span}); // сохраняем диапазон
             rowNames.appendChild(th);
             i = j;
         }
@@ -687,7 +683,8 @@
             if (start === 0 || start === 1 || start === 2 || linkIndices.includes(start) || start === 40 || start === 41) return;
             measureEl.textContent = th.textContent;
             const textWidth = measureEl.offsetWidth + 20;
-            const totalWidth = Math.max(textWidth, 100);
+            const totalWidth = Math.max(textWidth, 100); // минимальная ширина 100px
+            // Распределяем ширину равномерно между колонками в span
             const perCol = Math.ceil(totalWidth / span);
             for (let k = start; k <= end; k++) {
                 colWidths[k] = perCol;
@@ -698,6 +695,7 @@
             const col = document.createElement('col');
             if (linkIndices.includes(idx)) col.style.width = 'auto';
             else col.style.width = w + 'px';
+            // Добавляем класс для скрываемых столбцов
             if (idx >= COLLAPSE_START && idx <= COLLAPSE_END) {
                 col.classList.add('collapsible-col');
             }
@@ -727,6 +725,7 @@
             for (let j = 0; j < columns.length; j++) {
                 const td = document.createElement('td');
                 if (j === 3 || j === 17) td.classList.add('link-col');
+                // Класс для скрываемых столбцов
                 if (j >= COLLAPSE_START && j <= COLLAPSE_END) {
                     td.classList.add('collapsible-cell');
                 }
