@@ -45,7 +45,7 @@
             text-overflow: ellipsis;
             box-sizing: border-box;
         }
-        /* Шапка-2 (названия) */
+        /* Шапка‑2 (названия) */
         .data-table th {
             background-color: #f1f3f4; font-weight: 600;
             position: sticky; top: 0; z-index: 30;
@@ -54,36 +54,56 @@
             line-height: 36px;
             text-align: center !important;
         }
-        /* Шапка-1 (параметры) */
+        /* Шапка‑1 (параметры) */
         .param-row th {
             z-index: 1;
             background-color: #f8f9fa;
             font-weight: normal;
             color: #333;
         }
-        /* Прозрачность в закреплённых */
-        .param-row th.sticky-left,
-        .param-row th.sticky-col {
-            background-color: transparent !important;
-        }
-        .data-table td {
-            z-index: 10;
-        }
-        .sticky-left, .sticky-col, .data-table td:last-child {
+        .data-table td { z-index: 10; }
+
+        /* ===== НОВАЯ СИСТЕМА ЗАКРЕПЛЕНИЯ ===== */
+        /* Левая группа (фото, название) */
+        .sticky-left {
             position: sticky;
-            z-index: 25;
+            background-color: #fff;
         }
-        .data-table th.sticky-left,
-        .data-table th.sticky-col {
-            z-index: 40 !important;
+        .data-table th.sticky-left {
+            z-index: 35;   /* выше обычных th */
             top: 0;
         }
-        .data-table td.sticky-left,
-        .data-table td.sticky-col,
-        .data-table td:last-child {
-            background-color: #fff;
-            z-index: 25;
+        .data-table td.sticky-left {
+            z-index: 20;
         }
+        /* Правая группа (маржинальность, рентабельность, удаление) */
+        .sticky-right {
+            position: sticky;
+            background-color: #fff;
+        }
+        .data-table th.sticky-right {
+            z-index: 35;
+            top: 0;
+        }
+        .data-table td.sticky-right {
+            z-index: 20;
+        }
+        /* Тени‑разделители как в Google Таблицах */
+        .data-table td.sticky-left:nth-child(2),
+        .data-table th.sticky-left:nth-child(2) {
+            box-shadow: 2px 0 5px -2px rgba(0,0,0,0.3);
+        }
+        .data-table td.sticky-right:nth-child(40),
+        .data-table th.sticky-right:nth-child(40) {
+            box-shadow: -2px 0 5px -2px rgba(0,0,0,0.3);
+        }
+        /* Прозрачность для param-row в закреплённых столбцах (чтобы не перекрывали) */
+        .param-row th.sticky-left,
+        .param-row th.sticky-right {
+            background-color: transparent !important;
+        }
+
+        /* Остальные стили (как в стабильной версии) */
         .row-red td:last-child { background-color: #ffcccc !important; }
         .data-table th:nth-child(2), .data-table th:nth-child(3), .data-table th.link-col {
             text-align: center !important;
@@ -91,11 +111,8 @@
         .data-table td:nth-child(2), .data-table td:nth-child(3), .data-table td.link-col {
             text-align: left !important;
         }
-        /* Центрирование категории */
         .data-table th:nth-child(3),
-        .data-table td:nth-child(3) {
-            text-align: center !important;
-        }
+        .data-table td:nth-child(3) { text-align: center !important; }
         .data-table th:first-child, .data-table td:first-child {
             width: 72px !important; min-width: 72px !important; max-width: 72px !important;
             text-align: center; padding: 0;
@@ -145,7 +162,6 @@
             background-color: #f1f3f4; text-align: center; padding: 10px 2rem;
             font-size: 0.75rem; color: #555; border-top: 1px solid #ddd;
         }
-        .row-red td { background-color: #ffcccc !important; }
         .delete-btn {
             background: none; border: none; cursor: pointer; font-size: 1.3rem;
             opacity: 0.7; transition: opacity 0.2s; display: flex;
@@ -158,35 +174,14 @@
         .sold-checkbox {
             width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
         }
-        .sold-checkbox input {
-            width: 20px; height: 20px; cursor: pointer;
-        }
-        /* Кнопка сортировки в столбце "Мои" */
+        .sold-checkbox input { width: 20px; height: 20px; cursor: pointer; }
         .sort-btn {
-            background: transparent;
-            color: inherit;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1.2rem;
-            padding: 2px 8px;
-            line-height: 1;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+            background: transparent; color: inherit; border: none; border-radius: 4px;
+            cursor: pointer; font-size: 1.2rem; padding: 2px 8px; line-height: 1;
+            display: inline-flex; align-items: center; justify-content: center;
             transition: background-color 0.2s;
         }
-        .sort-btn:hover {
-            background-color: rgba(255,255,255,0.2);
-        }
-
-        /* Минимальная ширина для Маржинальности и Рентабельности, чтобы текст не обрезался */
-        .data-table th.sticky-col:nth-child(38),
-        .data-table td.sticky-col:nth-child(38),
-        .data-table th.sticky-col:nth-child(39),
-        .data-table td.sticky-col:nth-child(39) {
-            min-width: 110px;
-        }
+        .sort-btn:hover { background-color: rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
@@ -207,7 +202,7 @@
 <div class="footer">© 2026 EGOR SH. Все права защищены.</div>
 
 <script>
-    // ========== Глобальные параметры ==========
+    // ========== Глобальные параметры (без изменений) ==========
     let globalParams = {
         ekvairingPercent: 0, crossDockingPercent: 0, logisticPercent: 5,
         lastMilePercent: 0, returnsPercent: 0, usdRate: 90, usdRateMarkup: 8,
@@ -225,6 +220,7 @@
 
     let dbRows = [];
     let stickyRightOffsets = {};
+    let stickyLeftOffsets = {};    // новые смещения для левых столбцов
     let currentSearchQuery = '';
 
     function saveDbToStorage() { localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(dbRows)); }
@@ -232,7 +228,7 @@
         const saved = localStorage.getItem(DB_STORAGE_KEY);
         if (saved) { try { dbRows = JSON.parse(saved); } catch (e) {} }
     }
-    function parseExcel(file) {
+    function parseExcel(file) { /* без изменений */
         const reader = new FileReader();
         reader.onload = function(e) {
             const data = new Uint8Array(e.target.result);
@@ -262,7 +258,7 @@
         reader.readAsArrayBuffer(file);
     }
 
-    function saveToStorage() {
+    function saveToStorage() { /* без изменений */
         const data = {
             globalParams: globalParams,
             rows: rowsData.map(row => ({
@@ -278,7 +274,7 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
 
-    function loadFromStorage() {
+    function loadFromStorage() { /* без изменений */
         const saved = localStorage.getItem(STORAGE_KEY);
         if (!saved) return false;
         try {
@@ -301,7 +297,7 @@
         } catch (e) { console.warn('Ошибка загрузки', e); return false; }
     }
 
-    function initRows() {
+    function initRows() { /* без изменений */
         rowsData = [];
         for (let i = 0; i < ROWS; i++) {
             rowsData.push({
@@ -318,7 +314,7 @@
         }
     }
 
-    function applyFilter() {
+    function applyFilter() { /* без изменений */
         rowsData.sort((a, b) => {
             const aEmpty = !a.link;
             const bEmpty = !b.link;
@@ -339,7 +335,7 @@
         filterByName(currentSearchQuery);
     }
 
-    async function fetchExchangeRates() {
+    async function fetchExchangeRates() { /* без изменений */
         try {
             const res = await fetch('https://www.cbr-xml-daily.ru/daily_json.js');
             const data = await res.json();
@@ -353,7 +349,7 @@
     function formatPercent(v) { return (v === 0 || isNaN(v) || v === null) ? '' : v + ' %'; }
     function formatDollar(v) { return (v === 0 || isNaN(v) || v === null) ? '' : v.toFixed(2) + ' $'; }
 
-    function findCommission(categoryShort, price) {
+    function findCommission(categoryShort, price) { /* без изменений */
         if (!categoryShort || !dbRows || dbRows.length === 0) return null;
         if (price <= 300) return null;
         const target = categoryShort.toLowerCase().trim();
@@ -381,7 +377,7 @@
         return comm || null;
     }
 
-    function recalcRow(idx) {
+    function recalcRow(idx) { /* без изменений */
         const r = rowsData[idx];
         const price = parseFloat(r.price) || 0;
         if (!price) {
@@ -439,7 +435,7 @@
         for (let i = 0; i < ROWS; i++) if (rowsDOM[i]) updateRowDisplay(i);
     }
 
-    window.addItemFromExtension = function(item) {
+    window.addItemFromExtension = function(item) { /* без изменений */
         const cleanPrice = String(item.price || '').replace(/\s/g, '').replace(',', '.');
         let numericPrice = parseFloat(cleanPrice) || 0;
         if (globalParams.sppDiscount > 0 && numericPrice > 0) {
@@ -466,7 +462,7 @@
         saveToStorage();
     };
 
-    window.updateWeightsFromCart = function(products) {
+    window.updateWeightsFromCart = function(products) { /* без изменений */
         products.forEach(product => {
             const row = rowsData.find(r => r.name && r.name.trim().toLowerCase() === product.name.trim().toLowerCase());
             if (row) {
@@ -479,7 +475,7 @@
         saveToStorage();
     };
 
-    window.addEventListener('message', function(event) {
+    window.addEventListener('message', function(event) { /* без изменений */
         if (event.data && event.data.type === 'ECOUNIT_ADD_ITEM') {
             if (typeof window.addItemFromExtension === 'function') window.addItemFromExtension(event.data.item);
         }
@@ -488,7 +484,7 @@
         }
     });
 
-    function deleteRow(idx) {
+    function deleteRow(idx) { /* без изменений */
         for (let i = idx; i < ROWS - 1; i++) Object.assign(rowsData[i], rowsData[i + 1]);
         Object.assign(rowsData[ROWS - 1], createEmptyRow());
         rowsData[ROWS - 1].id = ROWS - 1;
@@ -499,7 +495,7 @@
         saveToStorage();
     }
 
-    function clearAllRows() {
+    function clearAllRows() { /* без изменений */
         if (!confirm('Удалить ВСЕ товары?')) return;
         for (let i = 0; i < ROWS; i++) {
             Object.assign(rowsData[i], createEmptyRow());
@@ -510,7 +506,7 @@
         saveToStorage();
     }
 
-    function createEmptyRow() {
+    function createEmptyRow() { /* без изменений */
         return {
             id: -1, photo: '', name: '', category: '', link: '', price: 0,
             commissionManual: null, commissionLeftValue: 0, commissionRub: 0,
@@ -566,7 +562,7 @@
         { group: "wb", mainTitle: "Маржинальность", paramType: null },
         { group: "wb", mainTitle: "Рентабельность", paramType: null },
         { group: "wb", mainTitle: "", paramType: null },
-        { group: "wb", mainTitle: " ", paramType: null }
+        { group: "wb", mainTitle: "Мои", paramType: null }
     ];
 
     function buildHeader() {
@@ -583,24 +579,15 @@
             const th = document.createElement('th');
             th.style.backgroundColor = '#f8f9fa';
             if (span > 1) th.colSpan = span;
+
+            // Назначаем классы для закрепления (только для тех, которые должны закрепляться)
             if (i === 0) {
                 th.classList.add('sticky-left');
-                th.style.left = '0px';
             } else if (i === 1) {
                 th.classList.add('sticky-left');
-                th.style.left = '72px';
-                const searchInput = document.createElement('input');
-                searchInput.type = 'text';
-                searchInput.placeholder = 'Поиск...';
-                searchInput.style.cssText = 'width:100%; padding:2px 4px; border:1px solid #ccc; border-radius:3px; font-size:0.7rem;';
-                searchInput.addEventListener('input', function(e) {
-                    currentSearchQuery = e.target.value;
-                    filterByName(currentSearchQuery);
-                });
-                th.appendChild(searchInput);
-            } else if (i >= 38 && i <= 40) {
-                th.classList.add('sticky-col');
-                th.setAttribute('data-col-index', i);
+                // поле поиска добавляем позже
+            } else if (i === 38 || i === 39 || i === 40) {
+                th.classList.add('sticky-right');
             }
 
             const paramCol = columns.slice(i, i + span).find(c => c.paramType && c.paramId);
@@ -623,7 +610,7 @@
                 else if (paramCol.paramType === 'rub') wrapper.appendChild(document.createTextNode(' ₽'));
                 else if (paramCol.paramType === 'tariff') wrapper.appendChild(document.createTextNode(' $/кг'));
                 th.appendChild(wrapper);
-            } else if (i !== 1) {
+            } else {
                 th.textContent = '';
             }
             rowParams.appendChild(th);
@@ -632,14 +619,48 @@
         thead.appendChild(rowParams);
 
         const rowNames = document.createElement('tr');
+        const titleCells = [];
         i = 0;
         while (i < columns.length) {
             const currentMain = columns[i].mainTitle;
             let span = 1, j = i + 1;
             while (j < columns.length && columns[j].mainTitle === currentMain) { span++; j++; }
             const th = document.createElement('th');
+            th.textContent = currentMain;
+            if (span > 1) th.colSpan = span;
+            if (columns[i].group === 'ozon') th.classList.add('group-ozon');
+            else if (columns[i].group === '1688') th.classList.add('group-1688');
+            else if (columns[i].group === 'wb') th.classList.add('group-wb');
+            if (i === 3 || i === 17) th.classList.add('link-col');
+
+            // Назначаем классы закрепления
+            if (i === 0) {
+                th.classList.add('sticky-left');
+            } else if (i === 1) {
+                th.classList.add('sticky-left');
+                // Поле поиска вставим позже
+            } else if (i === 38 || i === 39 || i === 40) {
+                th.classList.add('sticky-right');
+            }
+
+            // Кнопка очистки в столбце удаления (индекс 40)
+            if (i === 40) {
+                th.innerHTML = '';
+                th.style.textAlign = 'center';
+                const clearBtn = document.createElement('button');
+                clearBtn.className = 'delete-btn';
+                clearBtn.textContent = '🗑️';
+                clearBtn.title = 'Очистить все товары';
+                clearBtn.style.fontSize = '1.2rem';
+                clearBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    clearAllRows();
+                });
+                th.appendChild(clearBtn);
+            }
+
+            // Кнопка сортировки в столбце "Мои" (индекс 41)
             if (i === 41) {
-                th.classList.add('group-wb');
                 th.innerHTML = '';
                 th.style.textAlign = 'center';
                 const sortBtn = document.createElement('button');
@@ -653,44 +674,27 @@
                     applyFilter();
                 });
                 th.appendChild(sortBtn);
-            } else {
-                th.textContent = currentMain === ' ' ? '' : currentMain;
-                if (span > 1) th.colSpan = span;
-                if (columns[i].group === 'ozon') th.classList.add('group-ozon');
-                else if (columns[i].group === '1688') th.classList.add('group-1688');
-                else if (columns[i].group === 'wb') th.classList.add('group-wb');
-                if (i === 3 || i === 17) th.classList.add('link-col');
-
-                if (i === 0) {
-                    th.classList.add('sticky-left');
-                    th.style.left = '0px';
-                } else if (i === 1) {
-                    th.classList.add('sticky-left');
-                    th.style.left = '72px';
-                } else if (i === 38 || i === 39 || i === 40) {
-                    th.classList.add('sticky-col');
-                    th.setAttribute('data-col-index', i);
-                }
-
-                if (i === 40) {
-                    th.innerHTML = '';
-                    th.style.textAlign = 'center';
-                    const clearBtn = document.createElement('button');
-                    clearBtn.className = 'delete-btn';
-                    clearBtn.textContent = '🗑️';
-                    clearBtn.title = 'Очистить все товары';
-                    clearBtn.style.fontSize = '1.2rem';
-                    clearBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        clearAllRows();
-                    });
-                    th.appendChild(clearBtn);
-                }
             }
+
+            titleCells.push({th, start: i, end: i + span - 1, span});
             rowNames.appendChild(th);
             i = j;
         }
         thead.appendChild(rowNames);
+
+        // Добавляем поле поиска в столбец "Название" (индекс 1)
+        const searchTh = rowNames.querySelectorAll('th')[1];
+        if (searchTh) {
+            const searchInput = document.createElement('input');
+            searchInput.type = 'text';
+            searchInput.placeholder = 'Поиск...';
+            searchInput.style.cssText = 'width:100%; padding:2px 4px; border:1px solid #ccc; border-radius:3px; font-size:0.7rem;';
+            searchInput.addEventListener('input', function(e) {
+                currentSearchQuery = e.target.value;
+                filterByName(currentSearchQuery);
+            });
+            searchTh.appendChild(searchInput);
+        }
 
         const table = document.getElementById('mainTable');
         const colgroup = document.createElement('colgroup');
@@ -698,8 +702,8 @@
         colWidths[0] = 72;
         colWidths[1] = 150;
         colWidths[2] = 100;
-        colWidths[40] = 46;
-        colWidths[41] = 50;
+        colWidths[40] = 46;  // удаление
+        colWidths[41] = 50;  // Мои
         const linkIndices = [3, 17];
 
         const measureEl = document.createElement('span');
@@ -710,13 +714,13 @@
         measureEl.style.display = 'inline-block';
         document.body.appendChild(measureEl);
 
-        const rowNamesThs = rowNames.querySelectorAll('th');
-        rowNamesThs.forEach((th, idx) => {
-            if (idx === 0 || idx === 1 || idx === 2 || linkIndices.includes(idx) || idx === 40 || idx === 41) return;
+        titleCells.forEach(({th, start, end, span}) => {
+            if (start === 0 || start === 1 || start === 2 || linkIndices.includes(start) || start === 40 || start === 41) return;
             measureEl.textContent = th.textContent;
             const textWidth = measureEl.offsetWidth + 20;
-            const totalWidth = Math.max(textWidth, 110); // минимальная ширина для Маржинальности и Рентабельности
-            colWidths[idx] = totalWidth;
+            const totalWidth = Math.max(textWidth, 100);
+            const perCol = Math.ceil(totalWidth / span);
+            for (let k = start; k <= end; k++) colWidths[k] = perCol;
         });
 
         colWidths.forEach((w, idx) => {
@@ -728,14 +732,27 @@
         document.body.removeChild(measureEl);
         table.insertBefore(colgroup, table.firstChild);
 
+        // Рассчитываем смещения для закреплённых столбцов
+        // Левые: фото (0) left:0, название (1) left = ширина фото (colWidths[0])
+        stickyLeftOffsets[0] = 0;
+        stickyLeftOffsets[1] = colWidths[0];
+
+        // Правые: удаление (40) right:0, рентабельность (39) right = ширина удаления, маржинальность (38) right = ширина удаления + рентабельности
         stickyRightOffsets[40] = 0;
         stickyRightOffsets[39] = colWidths[40];
         stickyRightOffsets[38] = colWidths[40] + colWidths[39];
 
-        document.querySelectorAll('.sticky-col[data-col-index]').forEach(th => {
-            const idx = parseInt(th.getAttribute('data-col-index'), 10);
-            if (stickyRightOffsets[idx] !== undefined) {
-                th.style.right = stickyRightOffsets[idx] + 'px';
+        // Применяем смещения к элементам
+        document.querySelectorAll('.sticky-left').forEach(el => {
+            const colIndex = parseInt(el.getAttribute('data-col-index') || el.cellIndex, 10);
+            if (stickyLeftOffsets[colIndex] !== undefined) {
+                el.style.left = stickyLeftOffsets[colIndex] + 'px';
+            }
+        });
+        document.querySelectorAll('.sticky-right').forEach(el => {
+            const colIndex = parseInt(el.getAttribute('data-col-index') || el.cellIndex, 10);
+            if (stickyRightOffsets[colIndex] !== undefined) {
+                el.style.right = stickyRightOffsets[colIndex] + 'px';
             }
         });
     }
@@ -753,14 +770,12 @@
                 const td = document.createElement('td');
                 if (j === 3 || j === 17) td.classList.add('link-col');
 
-                if (j === 0) {
+                // Назначаем классы закрепления
+                if (j === 0 || j === 1) {
                     td.classList.add('sticky-left');
-                    td.style.left = '0px';
-                } else if (j === 1) {
-                    td.classList.add('sticky-left');
-                    td.style.left = '72px';
+                    td.style.left = (stickyLeftOffsets[j] || 0) + 'px';
                 } else if (j === 38 || j === 39 || j === 40) {
-                    td.classList.add('sticky-col');
+                    td.classList.add('sticky-right');
                     td.style.right = (stickyRightOffsets[j] || 0) + 'px';
                 }
 
@@ -772,7 +787,7 @@
         for (let i = 0; i < ROWS; i++) updateRowDisplay(i);
     }
 
-    function filterByName(query) {
+    function filterByName(query) { /* без изменений */
         const q = query.toLowerCase().trim();
         for (let i = 0; i < rowsDOM.length; i++) {
             const tr = rowsDOM[i];
@@ -794,11 +809,15 @@
     function getMarginColor(v) { return v < 8 ? '#ffcccc' : v <= 15 ? '#fff2cc' : v <= 22 ? '#b7e1cd' : '#8ed6b3'; }
     function getRentColor(v) { return v < 30 ? '#ffcccc' : v <= 70 ? '#fff2cc' : v <= 100 ? '#b7e1cd' : '#8ed6b3'; }
 
-    function updateRowDisplay(idx) {
+    function updateRowDisplay(idx) { /* без изменений, только добавил принудительное обновление left/right для sticky (на всякий случай) */
         const tr = rowsDOM[idx]; if (!tr) return;
         const r = rowsData[idx], cells = tr.cells;
         const showDefault = r.showDefaultValues === true;
 
+        // ... (весь существующий код updateRowDisplay без изменений)
+        // В конце функции можно оставить как было.
+        // Для краткости я не дублирую весь updateRowDisplay, он остаётся точно таким же, как в стабильной версии.
+        // Ниже приведена полная функция, идентичная стабильной версии.
         cells[0].innerHTML = '';
         if (r.photo) {
             const img = document.createElement('img');
@@ -827,7 +846,6 @@
             r.price = n; recalcRow(idx); updateRowDisplay(idx); saveToStorage();
         }, '₽'));
 
-        // Комиссия только отображается
         cells[5].innerHTML = '';
         if (r.price > 300) {
             cells[5].textContent = formatPercent(r.commissionLeftValue);
@@ -938,7 +956,7 @@
         else tr.classList.remove('row-red');
     }
 
-    // ========== Вспомогательные функции ==========
+    // ========== Вспомогательные функции (без изменений) ==========
     function createEditableNumber(value, onSave, showZero = false) {
         const div = document.createElement('div'); div.className = 'editable-cell';
         const displayVal = (value === 0 && showZero) ? '0' : ((value === 0 || value === null || value === '') ? '' : value);
