@@ -45,7 +45,6 @@
             text-overflow: ellipsis;
             box-sizing: border-box;
         }
-        /* Шапка-2 (названия) – без position: sticky */
         .data-table th {
             background-color: #f1f3f4; font-weight: 600;
             border-bottom: 3px solid #ccc;
@@ -53,15 +52,17 @@
             line-height: 36px;
             text-align: center !important;
         }
-        /* Шапка-1 (параметры) */
         .param-row th {
             background-color: #f8f9fa;
             font-weight: normal;
             color: #333;
         }
-        .data-table td { }
 
-        /* Без каких-либо sticky-правил */
+        /* Скрытие столбцов 7–37 (Эквайринг … Налог) */
+        .data-table.collapsed .collapsible-col,
+        .data-table.collapsed .collapsible-cell {
+            display: none;
+        }
 
         /* Остальные стили (как в стабильной версии) */
         .row-red td:last-child { background-color: #ffcccc !important; }
@@ -148,6 +149,7 @@
 <div class="header">
     <h1>ECOUNIT</h1>
     <div>
+        <button class="upload-btn" id="toggleColumnsBtn" style="margin-right: 8px;">Свернуть</button>
         <a class="upload-btn" id="ozonCalcBtn" href="https://calculator.ozon.ru/" target="_blank" style="margin-right: 8px;">OZON калькулятор</a>
         <button class="upload-btn" id="sppBtn" style="margin-right: 8px;">СПП</button>
         <button class="upload-btn" id="uploadDbBtn">Загрузить БД</button>
@@ -180,6 +182,9 @@
 
     let dbRows = [];
     let currentSearchQuery = '';
+
+    // Состояние сворачивания
+    let collapsed = false;
 
     function saveDbToStorage() { localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(dbRows)); }
     function loadDbFromStorage() {
@@ -523,6 +528,10 @@
         { group: "wb", mainTitle: "Мои", paramType: null }
     ];
 
+    // Индексы столбцов, которые можно свернуть (7 – Эквайринг, 37 – Налог)
+    const COLLAPSE_START = 7;
+    const COLLAPSE_END = 37;
+
     function buildHeader() {
         const thead = document.getElementById('tableHeader');
         thead.innerHTML = '';
@@ -537,6 +546,11 @@
             const th = document.createElement('th');
             th.style.backgroundColor = '#f8f9fa';
             if (span > 1) th.colSpan = span;
+
+            // Класс для скрываемых столбцов
+            if (i >= COLLAPSE_START && i <= COLLAPSE_END) {
+                th.classList.add('collapsible-cell');
+            }
 
             if (i === 1) {
                 const searchInput = document.createElement('input');
@@ -594,6 +608,11 @@
             else if (columns[i].group === '1688') th.classList.add('group-1688');
             else if (columns[i].group === 'wb') th.classList.add('group-wb');
             if (i === 3 || i === 17) th.classList.add('link-col');
+
+            // Класс для скрываемых столбцов
+            if (i >= COLLAPSE_START && i <= COLLAPSE_END) {
+                th.classList.add('collapsible-cell');
+            }
 
             if (i === 40) {
                 th.innerHTML = '';
@@ -662,10 +681,21 @@
             const col = document.createElement('col');
             if (linkIndices.includes(idx)) col.style.width = 'auto';
             else col.style.width = w + 'px';
+            // Добавляем класс для скрываемых столбцов
+            if (idx >= COLLAPSE_START && idx <= COLLAPSE_END) {
+                col.classList.add('collapsible-col');
+            }
             colgroup.appendChild(col);
         });
         document.body.removeChild(measureEl);
         table.insertBefore(colgroup, table.firstChild);
+
+        // Применяем текущее состояние сворачивания
+        if (collapsed) {
+            table.classList.add('collapsed');
+        } else {
+            table.classList.remove('collapsed');
+        }
     }
 
     let rowsDOM = [];
@@ -674,18 +704,29 @@
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
         rowsDOM = [];
+        const table = document.getElementById('mainTable');
         for (let i = 0; i < ROWS; i++) {
             const tr = document.createElement('tr');
             tr.setAttribute('data-row-id', i);
             for (let j = 0; j < columns.length; j++) {
                 const td = document.createElement('td');
                 if (j === 3 || j === 17) td.classList.add('link-col');
+                // Класс для скрываемых столбцов
+                if (j >= COLLAPSE_START && j <= COLLAPSE_END) {
+                    td.classList.add('collapsible-cell');
+                }
                 tr.appendChild(td);
             }
             tbody.appendChild(tr);
             rowsDOM.push(tr);
         }
         for (let i = 0; i < ROWS; i++) updateRowDisplay(i);
+        // Синхронизируем состояние сворачивания
+        if (collapsed) {
+            table.classList.add('collapsed');
+        } else {
+            table.classList.remove('collapsed');
+        }
     }
 
     function filterByName(query) {
@@ -1069,6 +1110,18 @@
         return modal;
     }
 
+    function toggleColumns() {
+        collapsed = !collapsed;
+        const table = document.getElementById('mainTable');
+        if (collapsed) {
+            table.classList.add('collapsed');
+            document.getElementById('toggleColumnsBtn').textContent = 'Развернуть';
+        } else {
+            table.classList.remove('collapsed');
+            document.getElementById('toggleColumnsBtn').textContent = 'Свернуть';
+        }
+    }
+
     async function init() {
         loadDbFromStorage();
         const loaded = loadFromStorage();
@@ -1099,6 +1152,8 @@
             }
             sppModal.style.display = 'flex';
         });
+
+        document.getElementById('toggleColumnsBtn').addEventListener('click', toggleColumns);
     }
 
     init();
