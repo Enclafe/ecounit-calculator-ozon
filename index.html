@@ -45,62 +45,38 @@
             text-overflow: ellipsis;
             box-sizing: border-box;
         }
-        /* Шапка‑2 (названия) */
+        /* Базовые стили шапок – БЕЗ position: sticky (шапки прокручиваются) */
         .data-table th {
             background-color: #f1f3f4; font-weight: 600;
-            position: sticky; top: 0; z-index: 30;
             border-bottom: 3px solid #ccc;
             height: 36px;
             line-height: 36px;
             text-align: center !important;
         }
-        /* Шапка‑1 (параметры) */
         .param-row th {
-            z-index: 1;
             background-color: #f8f9fa;
             font-weight: normal;
             color: #333;
         }
         .data-table td { z-index: 10; }
 
-        /* ===== НОВАЯ СИСТЕМА ЗАКРЕПЛЕНИЯ ===== */
-        /* Левая группа (фото, название) */
+        /* ===== ЗАКРЕПЛЕНИЕ ТОЛЬКО ДЛЯ ДАННЫХ (td) ===== */
         .sticky-left {
             position: sticky;
             background-color: #fff;
-        }
-        .data-table th.sticky-left {
-            z-index: 35;   /* выше обычных th */
-            top: 0;
-        }
-        .data-table td.sticky-left {
             z-index: 20;
         }
-        /* Правая группа (маржинальность, рентабельность, удаление) */
         .sticky-right {
             position: sticky;
             background-color: #fff;
-        }
-        .data-table th.sticky-right {
-            z-index: 35;
-            top: 0;
-        }
-        .data-table td.sticky-right {
             z-index: 20;
         }
         /* Тени‑разделители как в Google Таблицах */
-        .data-table td.sticky-left:nth-child(2),
-        .data-table th.sticky-left:nth-child(2) {
+        .data-table td.sticky-left:nth-child(2) {
             box-shadow: 2px 0 5px -2px rgba(0,0,0,0.3);
         }
-        .data-table td.sticky-right:nth-child(40),
-        .data-table th.sticky-right:nth-child(40) {
+        .data-table td.sticky-right:nth-child(40) {
             box-shadow: -2px 0 5px -2px rgba(0,0,0,0.3);
-        }
-        /* Прозрачность для param-row в закреплённых столбцах */
-        .param-row th.sticky-left,
-        .param-row th.sticky-right {
-            background-color: transparent !important;
         }
 
         /* Остальные стили (как в стабильной версии) */
@@ -202,7 +178,7 @@
 <div class="footer">© 2026 EGOR SH. Все права защищены.</div>
 
 <script>
-    // ========== Глобальные параметры (без изменений) ==========
+    // ========== Глобальные параметры ==========
     let globalParams = {
         ekvairingPercent: 0, crossDockingPercent: 0, logisticPercent: 5,
         lastMilePercent: 0, returnsPercent: 0, usdRate: 90, usdRateMarkup: 8,
@@ -580,16 +556,6 @@
             th.style.backgroundColor = '#f8f9fa';
             if (span > 1) th.colSpan = span;
 
-            // Классы и data-атрибуты для закрепления
-            if (i === 0 || i === 1 || i === 38 || i === 39 || i === 40) {
-                th.setAttribute('data-col-index', i);
-                if (i === 0 || i === 1) {
-                    th.classList.add('sticky-left');
-                } else {
-                    th.classList.add('sticky-right');
-                }
-            }
-
             // Поле поиска в столбце "Название" (индекс 1)
             if (i === 1) {
                 const searchInput = document.createElement('input');
@@ -647,16 +613,6 @@
             else if (columns[i].group === '1688') th.classList.add('group-1688');
             else if (columns[i].group === 'wb') th.classList.add('group-wb');
             if (i === 3 || i === 17) th.classList.add('link-col');
-
-            // Классы и data-атрибуты для закрепления
-            if (i === 0 || i === 1 || i === 38 || i === 39 || i === 40) {
-                th.setAttribute('data-col-index', i);
-                if (i === 0 || i === 1) {
-                    th.classList.add('sticky-left');
-                } else {
-                    th.classList.add('sticky-right');
-                }
-            }
 
             // Кнопка очистки в столбце удаления (индекс 40)
             if (i === 40) {
@@ -733,23 +689,13 @@
         document.body.removeChild(measureEl);
         table.insertBefore(colgroup, table.firstChild);
 
-        // Рассчитываем смещения для закреплённых столбцов
+        // Смещения для закреплённых столбцов (только td)
         stickyLeftOffsets[0] = 0;
         stickyLeftOffsets[1] = colWidths[0];
 
         stickyRightOffsets[40] = 0;
         stickyRightOffsets[39] = colWidths[40];
         stickyRightOffsets[38] = colWidths[40] + colWidths[39];
-
-        // Применяем смещения ко всем элементам с классами sticky
-        document.querySelectorAll('.sticky-left, .sticky-right').forEach(el => {
-            const colIndex = parseInt(el.getAttribute('data-col-index') || el.cellIndex, 10);
-            if (el.classList.contains('sticky-left') && stickyLeftOffsets[colIndex] !== undefined) {
-                el.style.left = stickyLeftOffsets[colIndex] + 'px';
-            } else if (el.classList.contains('sticky-right') && stickyRightOffsets[colIndex] !== undefined) {
-                el.style.right = stickyRightOffsets[colIndex] + 'px';
-            }
-        });
     }
 
     let rowsDOM = [];
@@ -946,7 +892,7 @@
         else tr.classList.remove('row-red');
     }
 
-    // ========== Вспомогательные функции (без изменений) ==========
+    // ========== Вспомогательные функции ==========
     function createEditableNumber(value, onSave, showZero = false) {
         const div = document.createElement('div'); div.className = 'editable-cell';
         const displayVal = (value === 0 && showZero) ? '0' : ((value === 0 || value === null || value === '') ? '' : value);
