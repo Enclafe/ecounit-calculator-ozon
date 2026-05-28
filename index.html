@@ -179,23 +179,7 @@
         .sort-btn:hover {
             background-color: rgba(255,255,255,0.2);
         }
-        /* Тонкие разделители, идентичные сетке, для закреплённых столбцов */
-        .data-table th.sticky-left:nth-child(2),
-        .data-table td.sticky-left:nth-child(2) {
-            border-right: 1px solid rgba(221, 221, 221, 0.25);
-        }
-        .data-table th.sticky-col:nth-child(38),
-        .data-table td.sticky-col:nth-child(38) {
-            border-right: 1px solid rgba(221, 221, 221, 0.25);
-        }
-        .data-table th.sticky-col:nth-child(39),
-        .data-table td.sticky-col:nth-child(39) {
-            border-right: 1px solid rgba(221, 221, 221, 0.25);
-        }
-        .data-table th.sticky-col:nth-child(40),
-        .data-table td.sticky-col:nth-child(40) {
-            border-right: 1px solid rgba(221, 221, 221, 0.25);
-        }
+
         /* Минимальная ширина для Маржинальности и Рентабельности, чтобы текст не обрезался */
         .data-table th.sticky-col:nth-child(38),
         .data-table td.sticky-col:nth-child(38),
@@ -744,10 +728,9 @@
         document.body.removeChild(measureEl);
         table.insertBefore(colgroup, table.firstChild);
 
-        // Правильные смещения для правых закреплённых столбцов
-        stickyRightOffsets[40] = 0; // Корзина
-        stickyRightOffsets[39] = colWidths[40]; // Рентабельность = ширина Корзины
-        stickyRightOffsets[38] = colWidths[40] + colWidths[39]; // Маржинальность = ширина Корзины + Рентабельности
+        stickyRightOffsets[40] = 0;
+        stickyRightOffsets[39] = colWidths[40];
+        stickyRightOffsets[38] = colWidths[40] + colWidths[39];
 
         document.querySelectorAll('.sticky-col[data-col-index]').forEach(th => {
             const idx = parseInt(th.getAttribute('data-col-index'), 10);
